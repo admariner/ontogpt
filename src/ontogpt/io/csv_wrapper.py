@@ -23,7 +23,7 @@ def write_obj_as_csv(obj: Any, file, minimize=True, index_field=None) -> None:
         rows = obj[index_field]
     else:
         raise ValueError(f"Cannot dump {obj} as CSV")
-    if isinstance(file, Path) or isinstance(file, str):
+    if isinstance(file, (Path, str)):
         file = open(file, "w", encoding="utf-8")
     rows = [row.dict() if isinstance(row, BaseModel) else row for row in rows]
     writer = csv.DictWriter(file, fieldnames=rows[0].keys(), delimiter="\t")
@@ -31,9 +31,7 @@ def write_obj_as_csv(obj: Any, file, minimize=True, index_field=None) -> None:
     for row in rows:
 
         def _str(s):
-            if s is None:
-                return ""
-            return str(s)
+            return "" if s is None else str(s)
 
         # row = {k: v for k, v in row.items() if "\n" not in str(v)}
         row = {k: _str(v).replace("\n", r"\n") for k, v in row.items()}

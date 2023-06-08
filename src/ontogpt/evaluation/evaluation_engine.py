@@ -21,9 +21,7 @@ from ontogpt.engines.spires_engine import SPIRESEngine
 
 def jaccard_index(a: Set, b: Set):
     """Compute the Jaccard index between two sets."""
-    if not a and not b:
-        return None
-    return len(a & b) / len(a | b)
+    return None if not a and not b else len(a & b) / len(a | b)
 
 
 class SimilarityScore(BaseModel):

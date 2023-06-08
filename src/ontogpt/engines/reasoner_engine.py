@@ -160,15 +160,14 @@ class ReasonerEngine(KnowledgeEngine):
             examples=task.examples,
         )
         completion_length = self.completion_length
-        if task.method == GPTReasonMethodType.EXPLANATION:
-            completion_length *= 2
-        elif task.method == GPTReasonMethodType.CHAIN_OF_THOUGHT:
+        if task.method in [
+            GPTReasonMethodType.EXPLANATION,
+            GPTReasonMethodType.CHAIN_OF_THOUGHT,
+        ]:
             completion_length *= 2
         logger.info(f"Prompt: {prompt}")
         prompt_length = len(self.encoding.encode(prompt)) + 10
-        max_len_total = 4097
-        if self.model == MODEL_GPT_4:
-            max_len_total = 8193
+        max_len_total = 8193 if self.model == MODEL_GPT_4 else 4097
         max_len = max_len_total - completion_length
         completed = True
         logger.info(f"PROMPT LENGTH: {prompt_length} [max={max_len}]")
@@ -237,8 +236,8 @@ class ReasonerEngine(KnowledgeEngine):
             print(f"CHAIN OF THOUGHT: {payload}")
             if match:
                 print(f"MATCH: {match.groups()}")
-                explanation = match.group(1)
-                text = match.group(2)
+                explanation = match[1]
+                text = match[2]
                 # rest = match.group(3)
                 axioms = [x.strip() for x in split_on_one_of(explanation, [";", ","])]
                 explanation = Explanation(axioms=[Axiom(text=a) for a in axioms if a])
@@ -251,18 +250,16 @@ class ReasonerEngine(KnowledgeEngine):
                         for axiom_text in axiom_texts
                     ]
         pattern = r"^(.*?)\s*\[\s*(.*?)\s*\]\s*(.*?)$"
-        match = re.match(pattern, payload)
-        if match:
-            text = match.group(1)
-            explanation = match.group(2)
-            rest = match.group(3)
-            axioms = [x.strip() for x in split_on_one_of(explanation, [";", ","])]
-            explanation = Explanation(axioms=[Axiom(text=a) for a in axioms if a])
-            if rest:
-                explanation.comments = [rest]
-            return Answer(text=text, explanations=[explanation])
-        else:
+        if not (match := re.match(pattern, payload)):
             return Answer(text=payload)
+        text = match[1]
+        explanation = match[2]
+        rest = match[3]
+        axioms = [x.strip() for x in split_on_one_of(explanation, [";", ","])]
+        explanation = Explanation(axioms=[Axiom(text=a) for a in axioms if a])
+        if rest:
+            explanation.comments = [rest]
+        return Answer(text=text, explanations=[explanation])
 
     def evaluate(self, result: ReasonerResult, task: Task):
         """Evaluate result against task."""
@@ -282,10 +279,7 @@ class ReasonerEngine(KnowledgeEngine):
         else:
             result.precision = result.num_true_positives / tp_plus_tn
         result.recall = result.num_true_positives / len(positives)
-        if len(all_texts) == 0:
-            result.jaccard_score = 0.0
-        else:
-            result.jaccard_score = len(ixn) / len(all_texts)
+        result.jaccard_score = 0.0 if not all_texts else len(ixn) / len(all_texts)
         if result.num_true_positives == 0:
             result.f1_score = 0.0
         else:

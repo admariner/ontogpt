@@ -82,16 +82,18 @@ class PredictionRE(BaseModel):
 
         def all_objects(dm: TextWithTriples):
             return list(
-                set(link.subject for link in dm.triples if not negated(link))
-                | set(link.object for link in dm.triples if not negated(link))
+                (
+                    {link.subject for link in dm.triples if not negated(link)}
+                    | {link.object for link in dm.triples if not negated(link)}
+                )
             )
 
         def pairs(dm: TextWithTriples) -> Set:
-            return set(
+            return {
                 (label(link.subject), label(link.object))
                 for link in dm.triples
                 if not negated(link)
-            )
+            }
 
         self.scores["similarity"] = SimilarityScore.from_set(
             all_objects(self.test_object),
@@ -143,9 +145,7 @@ class EvalCTD(SPIRESEvaluationEngine):
             collection = biocxml.load(f)
             triples_by_text = defaultdict(list)
             for document in collection.documents:
-                doc = {}
-                for p in document.passages:
-                    doc[p.infons["type"]] = p.text
+                doc = {p.infons["type"]: p.text for p in document.passages}
                 title = doc["title"]
                 abstract = doc["abstract"]
                 # text = f"Title: {title} Abstract: {abstract}"
@@ -166,7 +166,7 @@ class EvalCTD(SPIRESEvaluationEngine):
         ke = self.extractor
         docs = list(self.load_test_cases())
         shuffle(docs)
-        for doc in docs[0:num]:
+        for doc in docs[:num]:
             text = doc.text
             prompt = ke.get_completion_prompt(None, text)
             completion = ke.serialize_object(m)

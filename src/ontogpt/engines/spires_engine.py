@@ -76,10 +76,7 @@ class SPIRESEngine(KnowledgeEngine):
                         if isinstance(v, list):
                             extracted_object[k] += v
                         else:
-                            if k not in extracted_object:
-                                extracted_object[k] = v
-                            else:
-                                extracted_object[k] = v
+                            extracted_object[k] = v
         else:
             raw_text = self._raw_extract(text, cls, object=object)
             logging.info(f"RAW TEXT: {raw_text}")
@@ -157,10 +154,7 @@ class SPIRESEngine(KnowledgeEngine):
             },
         }
         ontology = ontology.lower()
-        if ontology in examples:
-            example = examples[ontology]
-        else:
-            example = examples["uberon"]
+        example = examples[ontology] if ontology in examples else examples["uberon"]
         prompt = "Normalize the following semicolon separated\
             list of terms to the {ontology.upper()} ontology\n\n"
         prompt += "For example:\n\n"
@@ -225,15 +219,11 @@ class SPIRESEngine(KnowledgeEngine):
             return " - ".join([self._serialize_value(v, slot) for v in val.values() if v])
         sv = self.schemaview
         if slot.range in sv.all_classes():
-            if self.labelers:
-                labelers = list(self.labelers)
-            else:
-                labelers = []
+            labelers = list(self.labelers) if self.labelers else []
             labelers += self.get_annotators(sv.get_class(slot.range))
             if labelers:
                 for labeler in labelers:
-                    label = labeler.label(val)
-                    if label:
+                    if label := labeler.label(val):
                         return label
         return val
 
@@ -246,8 +236,7 @@ class SPIRESEngine(KnowledgeEngine):
         """
         prompt = self.get_completion_prompt(cls, text, object=object)
         self.last_prompt = prompt
-        payload = self.client.complete(prompt)
-        return payload
+        return self.client.complete(prompt)
 
     def get_completion_prompt(
         self, cls: ClassDefinition = None, text: str = None, object: OBJECT = None
@@ -268,11 +257,10 @@ class SPIRESEngine(KnowledgeEngine):
                 slot_prompt = slot.annotations[ANNOTATION_KEY_PROMPT].value
             elif slot.description:
                 slot_prompt = slot.description
+            elif slot.multivalued:
+                slot_prompt = f"semicolon-separated list of {slot.name}s"
             else:
-                if slot.multivalued:
-                    slot_prompt = f"semicolon-separated list of {slot.name}s"
-                else:
-                    slot_prompt = f"the value for {slot.name}"
+                slot_prompt = f"the value for {slot.name}"
             if slot.range in self.schemaview.all_enums():
                 enum_def = self.schemaview.get_enum(slot.range)
                 pvs = [str(k) for k in enum_def.permissible_values.keys()]
@@ -370,10 +358,7 @@ class SPIRESEngine(KnowledgeEngine):
             if slot.range in sv.all_classes():
                 inlined = sv.get_identifier_slot(slot_range.name) is None
         val = val.strip()
-        if slot.multivalued:
-            vals = [v.strip() for v in val.split(";")]
-        else:
-            vals = [val]
+        vals = [v.strip() for v in val.split(";")] if slot.multivalued else [val]
         vals = [val for val in vals if val]
         logging.debug(f"SLOT: {slot.name} INL: {inlined} VALS: {vals}")
         if inlined:
@@ -383,7 +368,7 @@ class SPIRESEngine(KnowledgeEngine):
                 vals = [self._extract_from_text_to_dict(v, slot_range) for v in vals]
             else:
                 for sep in [" - ", ":", "/", "*", "-"]:
-                    if all([sep in v for v in vals]):
+                    if all(sep in v for v in vals):
                         vals = [dict(zip(slots_of_range, v.split(sep, 1))) for v in vals]
                         for v in vals:
                             for k in v.keys():

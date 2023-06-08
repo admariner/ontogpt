@@ -40,7 +40,7 @@ class TestHALO(unittest.TestCase):
         elts = ke.get_candidate_elements()
         print(len(elts))
         self.assertGreater(len(elts), 10)
-        print(elts[0:5])
+        print(elts[:5])
 
     def test_hallucinate_element(self):
         ke = self.ke

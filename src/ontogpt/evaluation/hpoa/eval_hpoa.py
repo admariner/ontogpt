@@ -146,7 +146,7 @@ class EvalHPOA(SPIRESEvaluationEngine):
         if not isinstance(mondo, SearchInterface):
             raise ValueError("Mondo is not a SearchInterface")
         entities = list(mondo.basic_search(obj.id, config))
-        if len(entities) == 0:
+        if not entities:
             logging.warning(f"No matches for {obj.id} => {entities}")
             return
         if len(entities) > 1:
@@ -184,7 +184,7 @@ class EvalHPOA(SPIRESEvaluationEngine):
         eos.training = []
         eos.predictions = []
         shuffle(eos.test)
-        for test_case in eos.test[0:num_tests]:
+        for test_case in eos.test[:num_tests]:
             # text = self.disease_text(test_case.id)
             if len(test_case.publications) != 1:
                 raise ValueError(f"Expected 1 publication, got {len(test_case.publications)}")
@@ -212,7 +212,7 @@ class EvalHPOA(SPIRESEvaluationEngine):
         eos.training = []
         eos.predictions = []
         shuffle(eos.test)
-        for test_case in eos.test[0:num_tests]:
+        for test_case in eos.test[:num_tests]:
             text = self.disease_text(test_case.id)
             stub = {"name": test_case.name}
             results = ke.extract_from_text(text, object=stub)

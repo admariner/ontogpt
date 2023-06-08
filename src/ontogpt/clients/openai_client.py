@@ -31,12 +31,14 @@ class OpenAIClient:
 
     def complete(self, prompt, max_tokens=3000, **kwargs) -> str:
         engine = self.model
-        logger.info(f"Complete: engine={engine}, prompt[{len(prompt)}]={prompt[0:100]}...")
+        logger.info(
+            f"Complete: engine={engine}, prompt[{len(prompt)}]={prompt[:100]}..."
+        )
         cur = self.db_connection()
         res = cur.execute("SELECT payload FROM cache WHERE prompt=? AND engine=?", (prompt, engine))
         payload = res.fetchone()
         if payload:
-            prompt_peek = str(prompt)[0:80].replace("\n", "\\n")
+            prompt_peek = str(prompt)[:80].replace("\n", "\\n")
             logger.info(f"Using cached payload for prompt: {prompt_peek}...")
             return payload[0]
         response = None
@@ -109,12 +111,11 @@ class OpenAIClient:
         response = sys.stdin.read()
         print("OK? (y/n)")
         ok = input()
-        if ok == "y":
-            print("Thank you! This will now be cached.")
-            print("Please be patient for the rest of the process to finish...")
-            return response
-        else:
+        if ok != "y":
             return self._interactive_completion(prompt, engine, max_tokens, **kwargs)
+        print("Thank you! This will now be cached.")
+        print("Please be patient for the rest of the process to finish...")
+        return response
 
     def cached_completions(
         self, search_term: str = None, engine: str = None
@@ -136,9 +137,7 @@ class OpenAIClient:
 
     def _must_use_chat_api(self) -> bool:
         """Return True if the model requires the chat API, False otherwise."""
-        if self.model.startswith("text-davinci"):
-            return False
-        return True
+        return not self.model.startswith("text-davinci")
 
     def embeddings(self, text: str, model: str = None):
         if model is None:
@@ -149,15 +148,13 @@ class OpenAIClient:
             cur.execute("CREATE TABLE embeddings_cache (text, engine, vector_as_string)")
         except sqlite3.OperationalError:
             logger.info("Embeddings cache table already exists")
-            pass
         res = cur.execute(
             "SELECT vector_as_string FROM embeddings_cache WHERE text=? AND engine=?", (text, model)
         )
-        payload = res.fetchone()
-        if payload:
-            logger.info(f"Using cached embeddings for {model} {text[0:80]}...")
+        if payload := res.fetchone():
+            logger.info(f"Using cached embeddings for {model} {text[:80]}...")
             return ast.literal_eval(payload[0])
-        logger.info(f"querying OpenAI for {model} {text[0:80]}...")
+        logger.info(f"querying OpenAI for {model} {text[:80]}...")
         response = openai.Embedding.create(
             model=model,
             input=text,
@@ -174,7 +171,9 @@ class OpenAIClient:
     def similarity(self, text1: str, text2: str, **kwargs):
         a1 = self.embeddings(text1, **kwargs)
         a2 = self.embeddings(text2, **kwargs)
-        logger.debug(f"similarity: {a1[0:10]}... x {a2[0:10]}... // ({len(a1)} x {len(a2)})")
+        logger.debug(
+            f"similarity: {a1[:10]}... x {a2[:10]}... // ({len(a1)} x {len(a2)})"
+        )
         return np.dot(a1, a2) / (np.linalg.norm(a1) * np.linalg.norm(a2))
 
     def euclidian_distance(self, text1: str, text2: str, **kwargs):

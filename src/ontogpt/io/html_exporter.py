@@ -62,10 +62,8 @@ class HTMLExporter(Exporter):
                 self.export_object(value, extraction_output, indent + 1)
             elif isinstance(value, list):
                 self.open_ul()
-                n = 1
-                for item in value:
+                for n, item in enumerate(value, start=1):
                     self.li(f"<b>item: {n}</b>: ")
-                    n += 1
                     if isinstance(item, pydantic.BaseModel):
                         self.export_object(
                             item, extraction_output=extraction_output, indent=indent + 1
@@ -81,10 +79,11 @@ class HTMLExporter(Exporter):
 
     def export_atom(self, value, extraction_output: ExtractionResult, indent: int):
         output = self.output
-        matches = [
-            ne for ne in extraction_output.named_entities if ne.id == value and is_curie(ne.id)
-        ]
-        if matches:
+        if matches := [
+            ne
+            for ne in extraction_output.named_entities
+            if ne.id == value and is_curie(ne.id)
+        ]:
             match = matches[0]
             output.write(f"{match.label} {self.link(match.id)}")
         else:
