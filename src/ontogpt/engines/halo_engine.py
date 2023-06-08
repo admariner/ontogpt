@@ -109,12 +109,10 @@ class HALOEngine(KnowledgeEngine):
         """
         added = []
         if seed_elements:
-            for e in seed_elements:
-                added.append(self.hallucinate_element(e))
+            added.extend(self.hallucinate_element(e) for e in seed_elements)
         for i in range(num_iterations):
             logger.info(f"Running HALO iteration {i}")
-            elt = self.hallucinate_once()
-            if elt:
+            if elt := self.hallucinate_once():
                 added.append(elt)
             else:
                 break
@@ -217,7 +215,7 @@ class HALOEngine(KnowledgeEngine):
         example_element_names = [x.name for x in example_elements]
         logger.info(f"Found {len(example_elements)} example elements: {example_element_names}")
         # TODO: set bound dynamically
-        prompt = self.generate_prompt(element, example_elements[0:10])
+        prompt = self.generate_prompt(element, example_elements[:10])
         # logger.info(f"Generated prompt: {prompt}")
         payload = self.client.complete(prompt.text)
         objs = self.integrate_payload(prompt, payload)
@@ -251,10 +249,7 @@ class HALOEngine(KnowledgeEngine):
         if element_name in self.element_scores:
             score = self.element_scores[element_name]
         else:
-            score = 0
-            for _, v in element.dict().items():
-                if v:
-                    score += 1
+            score = sum(1 for _, v in element.dict().items() if v)
             self.element_scores[element_name] = score
         element_tokens = set(self.tokenizer_encoding.encode(element_name))
         jaccard = len(tokens.intersection(element_tokens)) / len(tokens.union(element_tokens))
@@ -359,12 +354,9 @@ class HALOEngine(KnowledgeEngine):
             objs = self.parse_what_you_can(effective_payload)
         logger.info(f"## PARSED: {len(objs)}")
         added = []
-        n = 0
-        for obj in objs:
-            n += 1
+        for n, obj in enumerate(objs, start=1):
             slots_populated = [k for k, v in obj.items() if v]
-            diff = set(slots_populated).difference(allowed_slots)
-            if diff:
+            if diff := set(slots_populated).difference(allowed_slots):
                 logger.info(f"## SKIPPING SLOTS {diff}")
             obj = {k: v for k, v in obj.items() if k in allowed_slots}
             try:
@@ -407,8 +399,7 @@ class HALOEngine(KnowledgeEngine):
         :param obj:
         :return:
         """
-        existing = self.get_element(element.name)
-        if existing:
+        if existing := self.get_element(element.name):
             return False
         self.ontology.elements.append(element)
         return True
@@ -422,8 +413,7 @@ class HALOEngine(KnowledgeEngine):
         ancestors = list(set(list(self.adapter.ancestors(seeds, predicates, reflexive=True))))
         seed_graph = self.adapter.extract_graph(ancestors, predicates, dangling=False)
         logger.info(len(seed_graph.nodes))
-        seed_ontology = self.ontology_from_obograph(seed_graph)
-        return seed_ontology
+        return self.ontology_from_obograph(seed_graph)
 
     def xxontology_from_obograph(self, graph: Graph) -> Ontology:
         """Convert an OBO Graph to an Ontology.

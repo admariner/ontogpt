@@ -93,7 +93,7 @@ def parse_gene_set(input_path: Union[str, Path], format: str = None) -> GeneSet:
     if format == "yaml":
         with open(input_path, "r") as f:
             gene_set = GeneSet(**yaml.safe_load(f))
-    elif format == "json" or format == "msigdb":
+    elif format in ["json", "msigdb"]:
         with open(input_path, "r") as f:
             name, msig = list(json.load(f).items())[0]
             gene_set = GeneSet(name=name, gene_symbols=msig["geneSymbols"])
@@ -175,9 +175,9 @@ def _is_human(gene_set: GeneSet) -> bool:
     :return:
     """
     if gene_set.gene_ids:
-        if all([id.startswith("HGNC:") for id in gene_set.gene_ids]):
+        if all(id.startswith("HGNC:") for id in gene_set.gene_ids):
             return True
-        if any([id.startswith("HGNC:") for id in gene_set.gene_ids]):
+        if any(id.startswith("HGNC:") for id in gene_set.gene_ids):
             raise ValueError("Gene set contains mixed taxons. Please use a different gene set.")
         return False
     return gene_set.taxon.lower() == "human" or gene_set.taxon_id == "NCBITaxon:9606"

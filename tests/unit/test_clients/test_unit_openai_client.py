@@ -13,19 +13,11 @@ class TestCompletion(unittest.TestCase):
     """Test annotation."""
 
     def _client(self, engine: str) -> OpenAIClient:
-        # TODO: use a mock
-        # for now we have a pseudo-mock test; the test uses cached responses
-        # in UNIT_CACHE_DB.
-        # if the test changes (e.g. a new prompt is added) then
-        # 1. temporarily remove the setting for api_key (it will be set from your env)
-        # 2. run the test
-        # 3. commit the new cache db
-        client = OpenAIClient(
+        return OpenAIClient(
             model=engine,
             api_key="fake",
             cache_db_path=UNIT_CACHE_DB,
         )
-        return client
 
     def test_all_prompts(self):
         """Test all prompts."""

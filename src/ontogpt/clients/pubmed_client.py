@@ -25,13 +25,7 @@ def _score_paper(paper: PubmedArticle, keywords: List[str]) -> int:
 
 def _score_text(text: str, keywords: List[str]) -> int:
     text = text.lower()
-    if not text:
-        return -100
-    score = 0
-    for kw in keywords:
-        if kw in text:
-            score += 1
-    return score
+    return -100 if not text else sum(1 for kw in keywords if kw in text)
 
 
 @dataclass
@@ -61,7 +55,7 @@ class PubmedClient:
                 txt = pa.full_text
         if len(txt) > self.max_text_length:
             logging.warning(f"Truncating text: {txt[:self.max_text_length]}...")
-            txt = txt[0 : self.max_text_length]
+            txt = txt[:self.max_text_length]
         return txt
 
     def search(self, term: str, keywords: List[str] = None) -> Iterator[PMID]:
@@ -79,7 +73,7 @@ class PubmedClient:
         logging.info(f"Searching for {term}...")
         esr = ec.esearch(db="pubmed", term=term)
         logging.info(f"Found {esr.count} papers for {term}.")
-        paset = ec.efetch(db="pubmed", id=esr.ids[0:MAX_PMIDS])
+        paset = ec.efetch(db="pubmed", id=esr.ids[:MAX_PMIDS])
         keywords = keywords or []
         keywords = [_normalize(kw) for kw in keywords]
         scored_papers = [(_score_paper(paper, keywords), paper) for paper in paset]

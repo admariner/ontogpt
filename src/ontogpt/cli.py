@@ -67,10 +67,7 @@ settings = Settings()
 
 
 def _as_text_writer(f):
-    if isinstance(f, TextIOWrapper):
-        return f
-    else:
-        return codecs.getwriter("utf-8")(f)
+    return f if isinstance(f, TextIOWrapper) else codecs.getwriter("utf-8")(f)
 
 
 def write_extraction(
@@ -79,26 +76,23 @@ def write_extraction(
     output_format: str = None,
     knowledge_engine: KnowledgeEngine = None,
 ):
-    if output_format == "pickle":
-        output.write(pickle.dumps(results))
+    if output_format == "html":
+        output = _as_text_writer(output)
+        exporter = HTMLExporter()
+        exporter.export(results, output)
     elif output_format == "md":
         output = _as_text_writer(output)
         exporter = MarkdownExporter()
         exporter.export(results, output)
-    elif output_format == "html":
-        output = _as_text_writer(output)
-        exporter = HTMLExporter()
-        exporter.export(results, output)
-    elif output_format == "yaml":
-        output = _as_text_writer(output)
-        output.write(dump_minimal_yaml(results))
-    elif output_format == "turtle":
-        output = _as_text_writer(output)
-        exporter = RDFExporter()
-        exporter.export(results, output, knowledge_engine.schemaview)
     elif output_format == "owl":
         output = _as_text_writer(output)
         exporter = OWLExporter()
+        exporter.export(results, output, knowledge_engine.schemaview)
+    elif output_format == "pickle":
+        output.write(pickle.dumps(results))
+    elif output_format == "turtle":
+        output = _as_text_writer(output)
+        exporter = RDFExporter()
         exporter.export(results, output, knowledge_engine.schemaview)
     else:
         output = _as_text_writer(output)
@@ -247,7 +241,7 @@ def extract(
         raise FileNotFoundError(f"Cannot find input file {inputfile}")
     elif input:
         text = input
-    elif not input or input == "-":
+    else:
         text = sys.stdin.read()
     logging.info(f"Input text: {text}")
     if target_class:
@@ -320,7 +314,7 @@ def wikipedia_search(topic, keyword, template, output, output_format, **kwargs):
     logging.info(f"KW={keywords}")
     ke = SPIRESEngine(template, **kwargs)
     keywords.extend(ke.schemaview.schema.keywords)
-    search_term = f"{topic + ' ' + ' '.join(keywords)}"
+    search_term = f"{f'{topic} ' + ' '.join(keywords)}"
     print(f"Searching for {search_term}")
     search_results = client.search_wikipedia_articles(search_term)
     for _index, result in enumerate(search_results, start=1):
@@ -1147,7 +1141,7 @@ def clinical_notes(
 
     """
     c = OpenAIClient()
-    prompt = "create mock clinical notes for a patient like this: " + description
+    prompt = f"create mock clinical notes for a patient like this: {description}"
     if sections:
         prompt += " including sections: " + ", ".join(sections)
     results = c.complete(prompt)

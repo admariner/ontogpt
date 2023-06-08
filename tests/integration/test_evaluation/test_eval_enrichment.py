@@ -359,7 +359,7 @@ class TestEvalEnrichment(unittest.TestCase):
         self.hgnc = get_adapter("sqlite:obo:hgnc")
 
     def test_load(self):
-        for a in list(self.evaluator.ontology.associations())[0:10]:
+        for a in list(self.evaluator.ontology.associations())[:10]:
             print(a)
 
     def test_write_gene_sets(self):
@@ -477,7 +477,7 @@ class TestEvalEnrichment(unittest.TestCase):
         all = []
         gene_sets = load_gene_sets(GENE_SETS_DIR)
         print(type(gene_sets))
-        for gene_set in gene_sets.gene_sets[0:1]:
+        for gene_set in gene_sets.gene_sets[:1]:
             print(gene_set)
             comps = engine.evaluate_methods_on_gene_set(gene_set, max_size=10, n=1)
             print(comps)

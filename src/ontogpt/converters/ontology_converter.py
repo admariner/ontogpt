@@ -38,8 +38,7 @@ class OntologyConverter:
         ancestors = list(set(list(self.adapter.ancestors(seeds, predicates, reflexive=True))))
         seed_graph = self.adapter.extract_graph(ancestors, predicates, dangling=False)
         logger.info(len(seed_graph.nodes))
-        seed_ontology = self.from_obograph(seed_graph)
-        return seed_ontology
+        return self.from_obograph(seed_graph)
 
     def from_adapter(self) -> Ontology:
         """Convert an OAK adapter to an Ontology.

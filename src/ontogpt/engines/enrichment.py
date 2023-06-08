@@ -173,10 +173,10 @@ class EnrichmentEngine(KnowledgeEngine):
             logging.info(f"Looking up gene summary for {gene.id}...")
             if combined_synopsis:
                 if ontological_synopsis:
-                    desc = gene.ontological_synopsis + "; " + gene.narrative_synopsis
+                    desc = f"{gene.ontological_synopsis}; {gene.narrative_synopsis}"
                     logging.debug(f"Combined synopsis (priority: auto): {desc}")
                 else:
-                    desc = gene.narrative_synopsis + "; " + gene.ontological_synopsis
+                    desc = f"{gene.narrative_synopsis}; {gene.ontological_synopsis}"
                     logging.debug(f"Combined synopsis (priority: manual): {desc}")
             elif ontological_synopsis:
                 desc = gene.ontological_synopsis
@@ -234,7 +234,7 @@ class EnrichmentEngine(KnowledgeEngine):
             if desc is None:
                 desc = ""
             if truncation_factor < 1.0:
-                desc = desc[: int(len(desc) * truncation_factor)] + "..."
+                desc = f"{desc[:int(len(desc) * truncation_factor)]}..."
             gd_tuples.append((symbol, desc))
         prompt = template.render(
             gene_descriptions=gd_tuples,
@@ -249,9 +249,7 @@ class EnrichmentEngine(KnowledgeEngine):
         logging.info(f"Prompt [{truncation_factor}] Length: {len(prompt)}")
         # https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
         prompt_length = len(self.encoding.encode(prompt)) + 10
-        max_len_total = 4097
-        if self.model in MODEL_GPT_4:
-            max_len_total = 8193
+        max_len_total = 8193 if self.model in MODEL_GPT_4 else 4097
         max_len = max_len_total - self.completion_length
         logging.info(
             f"Prompt [{truncation_factor}] Toks: {prompt_length} / {max_len} Str={len(prompt)}"
@@ -320,6 +318,8 @@ class EnrichmentEngine(KnowledgeEngine):
             # sometimes the LLM will write an oxford comma style list
             payload.term_strings[-1] = payload.term_strings[-1].replace("and ", "")
         payload.term_ids = []
-        for term in payload.term_strings:
-            payload.term_ids.append(self.normalize_named_entity(term, GeneDescriptionTerm.__name__))
+        payload.term_ids.extend(
+            self.normalize_named_entity(term, GeneDescriptionTerm.__name__)
+            for term in payload.term_strings
+        )
         return payload

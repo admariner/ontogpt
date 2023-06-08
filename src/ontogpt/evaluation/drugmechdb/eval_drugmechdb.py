@@ -70,8 +70,10 @@ class PredictionDrugMechDB(BaseModel):
 
         def all_objects(dm: target_datamodel.DrugMechanism):
             return list(
-                set(link.subject for link in dm.mechanism_links)
-                | set(link.object for link in dm.mechanism_links)
+                (
+                    {link.subject for link in dm.mechanism_links}
+                    | {link.object for link in dm.mechanism_links}
+                )
             )
 
         self.scores["similarity"] = SimilarityScore.from_set(
@@ -158,15 +160,14 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
         self, mechanism: source_datamodel.Mechanism
     ) -> target_datamodel.DrugMechanism:
         """Translate a mechanism from DrugMechDB to the target template."""
-        triples = []
-        for link in mechanism.links:
-            triples.append(
-                target_datamodel.MechanismLink(
-                    subject=_fix_id(link.source),
-                    object=_fix_id(link.target),
-                    predicate=link.key,
-                )
+        triples = [
+            target_datamodel.MechanismLink(
+                subject=_fix_id(link.source),
+                object=_fix_id(link.target),
+                predicate=link.key,
             )
+            for link in mechanism.links
+        ]
         # the source YAML is a little odd;
         # - the singular field "reference" is usually a *list*
         # - the field "references" is usually a single string
@@ -184,10 +185,7 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
         self, num_test: int = 10, num_training: int = 5, include_texts: bool = False
     ) -> EvaluationObjectSetDrugMechDB:
         """Create a test and training set from the DrugMechDB database."""
-        if self.data is None:
-            mechanisms = self.load_target_database()
-        else:
-            mechanisms = self.data
+        mechanisms = self.load_target_database() if self.data is None else self.data
         if include_texts:
             mechanisms = [m for m in mechanisms if m.drug in self.drug_to_mechanism_text]
         shuffle(mechanisms)
@@ -201,7 +199,7 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
         mechanisms = self.load_target_database()
         mechanisms = [m for m in mechanisms if m.drug in self.drug_to_mechanism_text]
         shuffle(mechanisms)
-        for m in mechanisms[0:num]:
+        for m in mechanisms[:num]:
             stub = {
                 "disease": m.disease,
                 "drug": m.drug,
@@ -223,11 +221,10 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
             if len(m.references) != 1:
                 return False
             ref = m.references[0]
-            if ref.startswith("https://go.drugbank.com/drugs/") and ref.endswith(
-                "#mechanism-of-action"
-            ):
-                return True
-            return False
+            return bool(
+                ref.startswith("https://go.drugbank.com/drugs/")
+                and ref.endswith("#mechanism-of-action")
+            )
 
         mechanisms = [m for m in mechanisms if is_candidate(m)]
         print(f"Using {len(mechanisms)} mechanisms")

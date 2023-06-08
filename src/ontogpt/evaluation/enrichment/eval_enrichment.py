@@ -73,8 +73,7 @@ class GeneSetComparison(BaseModel):
 @cachier(stale_after=datetime.timedelta(days=3))
 def get_symbol_to_gene_id_map() -> Dict[SYMBOL, ENTITY_ID]:
     hgnc = get_adapter("sqlite:obo:hgnc")
-    label2id = {s: id.upper() for id, s in hgnc.labels(hgnc.entities())}
-    return label2id
+    return {s: id.upper() for id, s in hgnc.labels(hgnc.entities())}
 
 
 @dataclass
@@ -160,7 +159,7 @@ class EvalEnrichment(EvaluationEngine):
         payloads[CLOSURE] = self.gene_term_closure(gene_set)
         for k in [STANDARD, STANDARD_NO_ONTOLOGY, RANDOM, RANK_BASED]:
             payloads[k].method = k
-        comp = GeneSetComparison(
+        return GeneSetComparison(
             name=gene_set.name,
             gene_symbols=gene_set.gene_symbols,
             gene_ids=gene_set.gene_ids,
@@ -168,7 +167,6 @@ class EvalEnrichment(EvaluationEngine):
             payloads=payloads,
             **kwargs,
         )
-        return comp
 
     def random_gene_symbol(self) -> ENTITY_ID:
         """Get a random gene."""
@@ -184,10 +182,7 @@ class EvalEnrichment(EvaluationEngine):
         :param gene_set: GeneSet object, with gene_ids populated
         """
         gene_ids = gene_set.gene_ids
-        if use_ontology:
-            predicates = [IS_A, PART_OF]
-        else:
-            predicates = [EQUIVALENT_CLASS]  # TODO
+        predicates = [IS_A, PART_OF] if use_ontology else [EQUIVALENT_CLASS]
         results = self.ontology.enriched_classes(
             gene_ids, autolabel=True, object_closure_predicates=predicates
         )
@@ -214,11 +209,7 @@ class EvalEnrichment(EvaluationEngine):
     def random_enrichment(self, gene_set: GeneSet = None, n: int = None) -> EnrichmentPayload:
         """Randomized enrichment results."""
         if n is None:
-            # by default, return a number of terms proportional to the number of genes
-            if gene_set:
-                n = len(gene_set.gene_symbols)
-            else:
-                n = 20
+            n = len(gene_set.gene_symbols) if gene_set else 20
         anns = list(self.ontology.associations())
         random.shuffle(anns)
         payload = EnrichmentPayload()
@@ -249,7 +240,7 @@ class EvalEnrichment(EvaluationEngine):
         assocs = self.ontology.associations(
             objects=[term], object_closure_predicates=[IS_A, PART_OF]
         )
-        gene_ids = list(set([str(assoc.subject) for assoc in assocs]))
+        gene_ids = list({str(assoc.subject) for assoc in assocs})
         hgnc = get_adapter("sqlite:obo:hgnc")
         gene_symbols = [hgnc.label(id) for id in gene_ids]
         gene_symbols = [str(sym) for sym in gene_symbols if sym is not None]
@@ -293,7 +284,7 @@ class EvalEnrichment(EvaluationEngine):
     def get_mapped_annotations(self, path=None) -> Iterator[Tuple[str, str]]:
         """Load."""
         tupls = list(self.get_annotation_tuples(path))
-        symbols = set([sym for sym, _ in tupls])
+        symbols = {sym for sym, _ in tupls}
         m = map_hgnc_symbols(tuple(symbols))
         for sym, _ in tupls:
             if sym in m:

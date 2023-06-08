@@ -114,8 +114,7 @@ class Answer(BaseModel):
         """Return the shortest explanation for the answer."""
         if not self.explanations:
             return Explanation(axioms=[Axiom(text="No explanation found")])
-        shortest = min(self.explanations, key=lambda x: len(x.axioms))
-        return shortest
+        return min(self.explanations, key=lambda x: len(x.axioms))
 
 
 class ObjectAnswer(Answer):
@@ -241,13 +240,12 @@ class Task(BaseModel):
                 self.include_explanations = True
             elif self.method == GPTReasonMethodType.CHAIN_OF_THOUGHT:
                 self.chain_of_thought = True
+        elif self.include_explanations:
+            self.method = GPTReasonMethodType.EXPLANATION
+        elif self.chain_of_thought:
+            self.method = GPTReasonMethodType.CHAIN_OF_THOUGHT
         else:
-            if self.include_explanations:
-                self.method = GPTReasonMethodType.EXPLANATION
-            elif self.chain_of_thought:
-                self.method = GPTReasonMethodType.CHAIN_OF_THOUGHT
-            else:
-                self.method = GPTReasonMethodType.BASIC
+            self.method = GPTReasonMethodType.BASIC
 
 
 class OntologyCoherencyTask(Task):
@@ -1088,9 +1086,10 @@ class OntologyExtractor:
         graph = self.adapter.ancestor_graph([start], predicates=predicates)
         answer_map = defaultdict(list)
         for _s, end, path in shortest_paths(graph, [start], ends, directed=True):
-            axioms = []
-            for i in range(len(path) - 1):
-                axioms.append(self._axiom((path[i], IS_A, path[i + 1])))
+            axioms = [
+                self._axiom((path[i], IS_A, path[i + 1]))
+                for i in range(len(path) - 1)
+            ]
             answer_map[end].append(Explanation(axioms=axioms))
         return [ClassAnswer(text=self._name(end), explanations=answer_map[end]) for end in ends]
 
@@ -1282,7 +1281,7 @@ class OntologyExtractor:
                 isa_descendants = list(adapter.descendants(superclass, predicates=[IS_A]))
                 if (
                     len(descendants) < 15
-                    and len(descendants) > 0
+                    and descendants
                     and len(descendants) != len(isa_descendants)
                 ):
                     break
@@ -1348,7 +1347,7 @@ class OntologyExtractor:
                 parents = {rel[2] for rel in adapter.relationships(subjects=[c], predicates=[IS_A])}
                 if len(parents) > 1:
                     candidates.append((c, parents))
-            if len(candidates) == 0:
+            if not candidates:
                 raise ValueError("No suitable candidates")
             root_incoherent, parents = random.choice(candidates)
             incoherents = [
@@ -1455,10 +1454,11 @@ class OntologyExtractor:
         ):
             entailed_pred = row.subject
             bnode = row.object
-            chain = []
-            for inner_row in session.query(RdfListMemberStatement.object).filter(
-                RdfListMemberStatement.subject == bnode
-            ):
-                chain.append(inner_row[0])
+            chain = [
+                inner_row[0]
+                for inner_row in session.query(
+                    RdfListMemberStatement.object
+                ).filter(RdfListMemberStatement.subject == bnode)
+            ]
             expr = " o ".join(self._name(p) for p in chain)
             yield Axiom(text=f"{expr} SubPropertyOf {self._name(entailed_pred)}")

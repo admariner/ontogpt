@@ -36,8 +36,8 @@ class OWLExporter(Exporter):
             else:
                 id_value = getattr(element, id_slot_name, None)
                 print(f"Setting {id_slot_name} [{id_value}] to AUTO:_ROOT for {cls_name}")
-                if id_value is None:
-                    setattr(element, id_slot_name, "AUTO:_ROOT")
+            if id_value is None:
+                setattr(element, id_slot_name, "AUTO:_ROOT")
         axioms = []
         for named_entity in extraction_output.named_entities:
             ne_as_dc = self._as_dataclass_object(named_entity, schemaview)
@@ -54,5 +54,4 @@ class OWLExporter(Exporter):
         element_dict = element.dict()
         dataclasses_module = PythonGenerator(schemaview.schema).compile_module()
         target_class_py = dataclasses_module.__dict__[cls_name]
-        element_as_dataclass = target_class_py(**element_dict)
-        return element_as_dataclass
+        return target_class_py(**element_dict)

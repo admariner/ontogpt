@@ -141,9 +141,7 @@ class MappingEngine(KnowledgeEngine):
         )
 
         def _split(s: str, sep: str = ";") -> List[str]:
-            if s is None:
-                return []
-            return [s.strip() for s in s.split(sep)]
+            return [] if s is None else [s.strip() for s in s.split(sep)]
 
         lines = payload.split("\n")
         for line in lines:
@@ -195,8 +193,7 @@ class MappingEngine(KnowledgeEngine):
             if task.object_adapter:
                 # TODO: do not mutate.
                 self.object_adapter = get_adapter(task.object_adapter)
-            cm = self.categorize_mapping(task.subject, task.object)
-            yield cm
+            yield self.categorize_mapping(task.subject, task.object)
 
     def generate_tasks(
         self,

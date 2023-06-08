@@ -98,7 +98,7 @@ class TestDrugMechDB(unittest.TestCase):
     def test_load_exemplars(self):
         mechanisms = self.engine.load_exemplars()
         objs = [m.dict() for m in mechanisms]
-        print(yaml.dump(objs[0:5]))
+        print(yaml.dump(objs[:5]))
         self.assertGreater(len(mechanisms), 0)
 
     def test_transform(self):
@@ -124,13 +124,13 @@ class TestDrugMechDB(unittest.TestCase):
         objs = [m.dict() for m in mechanisms]
         with open(NORMALIZED_OUT, "w") as f:
             yaml.dump(objs, f)
-        print(yaml.dump(objs[0:5]))
+        print(yaml.dump(objs[:5]))
         self.assertGreater(len(mechanisms), 0)
 
     def test_load_target_database(self):
         mechanisms = self.engine.load_target_database()
         print(f"Loaded {len(mechanisms)} mechanisms")
-        objs = [m.dict() for m in mechanisms[0:5]]
+        objs = [m.dict() for m in mechanisms[:5]]
         print(yaml.dump(objs))
         self.assertGreater(len(mechanisms), 0)
 

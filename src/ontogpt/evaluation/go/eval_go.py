@@ -91,9 +91,7 @@ class EvalGO(SPIRESEvaluationEngine):
             return False
         if len(ldef.restrictions) != 1:
             return False
-        if self.differentia_relation != ldef.restrictions[0].propertyId:
-            return False
-        return True
+        return self.differentia_relation == ldef.restrictions[0].propertyId
 
     def create_test_and_training(
         self, num_test: int = 10, num_training: int = 10
@@ -106,13 +104,12 @@ class EvalGO(SPIRESEvaluationEngine):
         ontology = self.ontology
         entities = set(ontology.descendants([self.genus], [IS_A]))
         print(
-            f"Found {len(entities)} entities that are descendants of\
-                genus {self.genus}; {list(entities)[0:5]}"
+            f"Found {len(entities)} entities that are descendants of\\n        #                genus {self.genus}; {list(entities)[:5]}"
         )
         assert "GO:0140872" in entities
         all_test_ids = set(self.valid_test_ids())
         assert "GO:0140872" in all_test_ids
-        print(f"Found {len(all_test_ids)} test id candidates; {list(entities)[0:5]}")
+        print(f"Found {len(all_test_ids)} test id candidates; {list(entities)[:5]}")
         candidate_test_ids = entities.intersection(all_test_ids)
         print(f"Found {len(candidate_test_ids)} candidate test ids")
         assert "GO:0140872" in candidate_test_ids
@@ -135,17 +132,16 @@ class EvalGO(SPIRESEvaluationEngine):
         test = [self.make_term_from_ldef(ldef) for ldef in ldefs_test[:num_test]]
         training = [self.make_term_from_ldef(ldef) for ldef in ldefs_train[:num_training]]
 
-        eos = EvaluationObjectSetGO(test=test, training=training)
-        return eos
+        return EvaluationObjectSetGO(test=test, training=training)
 
     def eval(self) -> EvaluationObjectSetGO:
         ke = self.extractor
         eos = self.create_test_and_training()
         eos.predictions = []
         print(yaml.dump(eos.dict()))
-        for test_obj in eos.test[0:10]:
+        for test_obj in eos.test[:10]:
             print(yaml.dump(test_obj.dict()))
-            predicted_obj = ke.generalize({"label": test_obj.label}, eos.training[0:4])
+            predicted_obj = ke.generalize({"label": test_obj.label}, eos.training[:4])
             pred = PredictionGO(predicted_object=predicted_obj, test_object=test_obj)
             pred.calculate_scores()
             eos.predictions.append(pred)

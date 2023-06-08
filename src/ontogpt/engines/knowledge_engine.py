@@ -256,14 +256,12 @@ class KnowledgeEngine(ABC):
         self.template_pyclass = mod.__dict__[class_name]
         self.schemaview = sv
         logger.info(f"Getting class for template {template}")
-        cls = None
-        for c in sv.all_classes().values():
-            if c.name == class_name:
-                cls = c
-                break
-        if not cls:
+        if cls := next(
+            (c for c in sv.all_classes().values() if c.name == class_name), None
+        ):
+            return cls
+        else:
             raise ValueError(f"Template {template} not found")
-        return cls
 
     def _get_openai_api_key(self):
         """Get the OpenAI API key from the environment."""
@@ -369,8 +367,7 @@ class KnowledgeEngine(ABC):
             obj_id = text
         if ANNOTATION_KEY_RECURSE in cls.annotations:
             logger.info(f"Using recursive strategy to parse: {text} to {cls.name}")
-            obj = self.extract_from_text(text, cls).extracted_object
-            if obj:
+            if obj := self.extract_from_text(text, cls).extracted_object:
                 if self.named_entities is None:
                     self.named_entities = []
                 try:
@@ -451,11 +448,10 @@ class KnowledgeEngine(ABC):
         if not self.mappers:
             return
         for mapper in self.mappers:
-            if isinstance(mapper, MappingProviderInterface):
-                for mapping in mapper.sssom_mappings([input_id]):
-                    yield str(mapping.object_id)
-            else:
+            if not isinstance(mapper, MappingProviderInterface):
                 raise ValueError(f"Unknown mapper type {mapper}")
+            for mapping in mapper.sssom_mappings([input_id]):
+                yield str(mapping.object_id)
 
     def groundings(self, text: str, cls: ClassDefinition) -> Iterator[str]:
         """
@@ -474,12 +470,12 @@ class KnowledgeEngine(ABC):
         :return:
         """
         logger.info(f"GROUNDING {text} using {cls.name}")
-        id_matches = re.match(r"^(\S+):(\d+)$", text)
-        if id_matches:
-            obj_prefix = id_matches.group(1)
-            matching_prefixes = [x for x in cls.id_prefixes if x.upper() == obj_prefix.upper()]
-            if matching_prefixes:
-                yield matching_prefixes[0] + ":" + id_matches.group(2)
+        if id_matches := re.match(r"^(\S+):(\d+)$", text):
+            obj_prefix = id_matches[1]
+            if matching_prefixes := [
+                x for x in cls.id_prefixes if x.upper() == obj_prefix.upper()
+            ]:
+                yield f"{matching_prefixes[0]}:{id_matches[2]}"
         text_lower = text.lower()
         text_singularized = inflection.singularize(text_lower)
         if text_singularized != text_lower:
@@ -505,8 +501,7 @@ class KnowledgeEngine(ABC):
                     trimmed_text = trimmed_text.replace(f"[{component}]", "")
                 else:
                     raise AssertionError(f"Unknown paren char {paren_char}")
-            trimmed_text = trimmed_text.strip().replace("  ", " ")
-            if trimmed_text:
+            if trimmed_text := trimmed_text.strip().replace("  ", " "):
                 if len(trimmed_text) >= len(text_lower):
                     raise AssertionError(
                         f"Trimmed text {trimmed_text} is not shorter than {text_lower}"
@@ -527,11 +522,10 @@ class KnowledgeEngine(ABC):
                         yield obj_id
         if self.annotators and cls.name in self.annotators:
             annotators = self.annotators[cls.name]
+        elif ANNOTATION_KEY_ANNOTATORS in cls.annotations:
+            annotators = cls.annotations[ANNOTATION_KEY_ANNOTATORS].value.split(", ")
         else:
-            if ANNOTATION_KEY_ANNOTATORS not in cls.annotations:
-                annotators = []
-            else:
-                annotators = cls.annotations[ANNOTATION_KEY_ANNOTATORS].value.split(", ")
+            annotators = []
         logger.info(f" Annotators: {annotators} [will skip: {self.skip_annotators}]")
         # prioritize whole matches by running these first
         for matches_whole_text in [True, False]:
