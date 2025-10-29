@@ -50,7 +50,9 @@ classes:
             "STRING v12.0").
       source_type:
         description: >-
-          The category or type of data source.
+          The category or type of data source. This must be one of the 
+          following: database, literature corpus, ontology, experimental dataset.
+          If unclear, choose "database".
         range: SourceType
         annotations:
           prompt.example: database, literature corpus, ontology, experimental dataset
@@ -88,11 +90,12 @@ classes:
           proteins, drugs, diseases, pathways, phenotypes, targets, compounds.
         range: EntityType
         multivalued: true
-        required: true
+        required: false
         annotations:
           prompt: >-
             List all major entity types present (e.g., genes, drugs, diseases,
-            proteins, pathways, phenotypes, compounds, targets).
+            proteins, pathways, phenotypes, compounds, targets) in a
+            semicolon-separated list.
       relation_types:
         description: >-
           Semicolon-separated list of the types of relationships or edges
@@ -101,23 +104,36 @@ classes:
           drug-adverse effect.
         range: RelationType
         multivalued: true
-        required: true
+        required: false
         annotations:
           prompt: >-
             List all major relationship types (e.g., drug-target, gene-disease,
-            drug-drug interaction, protein-protein interaction, indication).
+            drug-drug interaction, protein-protein interaction, indication)
+            in a semicolon-separated list.
       descriptor_richness:
         description: >-
           Assessment of the quality and depth of annotations, metadata, and
           descriptive attributes associated with entities and relations.
           This includes confidence scores, evidence types, mechanistic details,
           and contextual information.
-        range: DescriptorRichness
-        required: true
+        range: string
+        required: false
         annotations:
           prompt: >-
             Describe the richness of metadata: Are there confidence scores?
             Evidence types? Mechanistic details? Effect directions? Clinical context?
+      descriptor_richness_category:
+        description: >-
+          Assessment of the quality and depth of annotations, metadata, and
+          descriptive attributes associated with entities and relations.
+          This includes confidence scores, evidence types, mechanistic details,
+          and contextual information.
+        range: DescriptorRichness
+        required: false
+        annotations:
+          prompt: >-
+            Provide one of the following categories for descriptor richness:
+            sparse, moderate, or rich. Do not include any other text for this field.
       
       # Source Scope attributes
       disease_coverage:
@@ -126,7 +142,7 @@ classes:
           of diseases, therapeutic areas represented, and whether coverage
           is focused on specific conditions or broadly cross-disease.
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             Describe disease coverage: single disease, specific therapeutic area,
@@ -137,7 +153,7 @@ classes:
           Description of which organisms or species are covered by the
           data source (e.g., human-only, human and model organisms, multi-species).
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             Which organisms are covered? Human-only, specific model organisms,
@@ -148,7 +164,7 @@ classes:
           entities, edges/relationships, or records. Provide specific numbers
           where possible.
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             Approximate scale: How many entities? How many edges/relationships?
@@ -161,7 +177,7 @@ classes:
           experimental techniques, diverse evidence including clinical and
           experimental).
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             What modalities or evidence types are included? Single modality
@@ -177,7 +193,7 @@ classes:
           relevant drug repurposing edge types.
         range: DrugDiseaseEdgeType
         multivalued: true
-        required: true
+        required: false
         annotations:
           prompt: >-
             List specific edge types relevant to drug repurposing: Drug-Target,
@@ -189,7 +205,7 @@ classes:
           with standard ontologies and identifiers used in MATRIX. Include
           information about ID systems used and mapping challenges.
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             What identifier systems are used? Do they map cleanly to standard
@@ -201,7 +217,7 @@ classes:
           (e.g., drug inhibits target vs. drug affects target) and effect
           information (e.g., activation, inhibition, increase, decrease).
         range: string
-        required: true
+        required: false
         annotations:
           prompt: >-
             Are relationships directional? Is effect information included
@@ -224,12 +240,23 @@ classes:
         description: >-
           Description of the level of human curation, expert review, or
           quality control applied to the data.
-        range: CurationLevel
-        required: true
+        range: string
+        required: false
         annotations:
           prompt: >-
             Is the data manually curated by experts, automatically extracted,
             or a mixture? What quality control processes are applied?
+      curation_level_category:
+        description: >-
+          Description of the level of human curation, expert review, or
+          quality control applied to the data.
+        range: CurationLevel
+        required: false
+        annotations:
+          prompt: >-
+            Provide one of the following categories for curation level:
+            manual, semi-automated, automated, or mixed. Do not include any
+            other text for this field.
       precision_estimate:
         description: >-
           Estimated precision or accuracy of the data, if known. This may
@@ -258,14 +285,24 @@ classes:
         description: >-
           Description of what level of filtering, cleaning, or post-processing
           would be required to use this data source effectively.
-        range: FilteringLevel
-        required: true
+        range: string
+        required: false
         annotations:
           prompt: >-
             How much filtering or cleaning is needed? Minimal (ready to use),
             moderate (some refinement needed), or heavy (extensive filtering
             required)?
-      
+      filtering_needed_category:
+        description: >-
+          Description of what level of filtering, cleaning, or post-processing
+          would be required to use this data source effectively.
+        range: FilteringLevel
+        required: false
+        annotations:
+          prompt: >-
+            Provide one of the following categories for filtering level:
+            minimal, moderate, or heavy. Do not include any other text for this field.
+
       # Computed Scores
       domain_coverage_score:
         description: >-
@@ -274,6 +311,9 @@ classes:
           sparse/generic relations, few descriptors. Score 2 (Medium): At least
           two entities, one consistent relation, usable descriptors. Score 3 (High):
           Three+ entities, multiple relations, rich descriptors enabling multi-hop paths.
+          A resource concerning only a single entity type (e.g., only proteins or 
+          only drugs) should always be scored as 1.
+          This value must be either 1, 2, or 3.
         range: DomainCoverageScore
         required: true
       source_scope_score:
@@ -284,6 +324,7 @@ classes:
           Multi-disease/organism, mid-scale (10k-100k+ edges), some modality
           breadth. Score 3 (High): Broad, cross-disease, large-scale (100k-1M+ edges),
           multiple relation subtypes and modalities.
+          This value must be either 1, 2, or 3.
         range: SourceScopeScore
         required: true
       utility_score:
@@ -295,7 +336,7 @@ classes:
           At least one direct edge family; IDs align reasonably; some direction/effect
           or clinical context present. Score 3 (High): Multiple strong edge families;
           clear direction/effect with evidence; consistent clinical context and
-          clean mappings.
+          clean mappings. This value must be either 1, 2, or 3.
         range: UtilityScore
         required: true
       noise_penalty:
@@ -308,6 +349,7 @@ classes:
           present but data needs refinement. Deduct -2 (High Noise): Majority
           of edges are text-mined/generic with <70% precision; many irrelevant
           or unscored edges; heavy filtering needed.
+          This value must be either 0, -1, or -2.
         range: NoisePenalty
         required: true
       final_score:

@@ -418,7 +418,7 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'version information (e.g., "DrugBank '
                                              'v5.1.9", "STRING v12.0").'}},
          'domain_of': ['DataSourceEvaluation']} })
-    source_type: Optional[SourceType] = Field(default=None, description="""The category or type of data source.""", json_schema_extra = { "linkml_meta": {'alias': 'source_type',
+    source_type: Optional[SourceType] = Field(default=None, description="""The category or type of data source. This must be one of the  following: database, literature corpus, ontology, experimental dataset. If unclear, choose \"database\".""", json_schema_extra = { "linkml_meta": {'alias': 'source_type',
          'annotations': {'prompt.example': {'tag': 'prompt.example',
                                             'value': 'database, literature corpus, '
                                                      'ontology, experimental dataset'}},
@@ -437,28 +437,37 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'source contains and what it was designed '
                                              'for.'}},
          'domain_of': ['DataSourceEvaluation']} })
-    entity_types: list[str] = Field(default=..., description="""Semicolon-separated list of the types of biological or chemical entities covered in the data source. Common types include genes, proteins, drugs, diseases, pathways, phenotypes, targets, compounds.""", json_schema_extra = { "linkml_meta": {'alias': 'entity_types',
+    entity_types: Optional[list[str]] = Field(default=None, description="""Semicolon-separated list of the types of biological or chemical entities covered in the data source. Common types include genes, proteins, drugs, diseases, pathways, phenotypes, targets, compounds.""", json_schema_extra = { "linkml_meta": {'alias': 'entity_types',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'List all major entity types present '
                                              '(e.g., genes, drugs, diseases, proteins, '
                                              'pathways, phenotypes, compounds, '
-                                             'targets).'}},
+                                             'targets) in a semicolon-separated '
+                                             'list.'}},
          'domain_of': ['DataSourceEvaluation']} })
-    relation_types: list[str] = Field(default=..., description="""Semicolon-separated list of the types of relationships or edges connecting entities in this source. Examples include drug-target, gene-disease, protein-protein interaction, pathway membership, drug-adverse effect.""", json_schema_extra = { "linkml_meta": {'alias': 'relation_types',
+    relation_types: Optional[list[str]] = Field(default=None, description="""Semicolon-separated list of the types of relationships or edges connecting entities in this source. Examples include drug-target, gene-disease, protein-protein interaction, pathway membership, drug-adverse effect.""", json_schema_extra = { "linkml_meta": {'alias': 'relation_types',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'List all major relationship types (e.g., '
                                              'drug-target, gene-disease, drug-drug '
                                              'interaction, protein-protein '
-                                             'interaction, indication).'}},
+                                             'interaction, indication) in a '
+                                             'semicolon-separated list.'}},
          'domain_of': ['DataSourceEvaluation']} })
-    descriptor_richness: DescriptorRichness = Field(default=..., description="""Assessment of the quality and depth of annotations, metadata, and descriptive attributes associated with entities and relations. This includes confidence scores, evidence types, mechanistic details, and contextual information.""", json_schema_extra = { "linkml_meta": {'alias': 'descriptor_richness',
+    descriptor_richness: Optional[str] = Field(default=None, description="""Assessment of the quality and depth of annotations, metadata, and descriptive attributes associated with entities and relations. This includes confidence scores, evidence types, mechanistic details, and contextual information.""", json_schema_extra = { "linkml_meta": {'alias': 'descriptor_richness',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Describe the richness of metadata: Are '
                                              'there confidence scores? Evidence types? '
                                              'Mechanistic details? Effect directions? '
                                              'Clinical context?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    disease_coverage: str = Field(default=..., description="""Description of the breadth of disease coverage, including number of diseases, therapeutic areas represented, and whether coverage is focused on specific conditions or broadly cross-disease.""", json_schema_extra = { "linkml_meta": {'alias': 'disease_coverage',
+    descriptor_richness_category: Optional[DescriptorRichness] = Field(default=None, description="""Assessment of the quality and depth of annotations, metadata, and descriptive attributes associated with entities and relations. This includes confidence scores, evidence types, mechanistic details, and contextual information.""", json_schema_extra = { "linkml_meta": {'alias': 'descriptor_richness_category',
+         'annotations': {'prompt': {'tag': 'prompt',
+                                    'value': 'Provide one of the following categories '
+                                             'for descriptor richness: sparse, '
+                                             'moderate, or rich. Do not include any '
+                                             'other text for this field.'}},
+         'domain_of': ['DataSourceEvaluation']} })
+    disease_coverage: Optional[str] = Field(default=None, description="""Description of the breadth of disease coverage, including number of diseases, therapeutic areas represented, and whether coverage is focused on specific conditions or broadly cross-disease.""", json_schema_extra = { "linkml_meta": {'alias': 'disease_coverage',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Describe disease coverage: single '
                                              'disease, specific therapeutic area, '
@@ -466,13 +475,13 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'cross-disease coverage. Include '
                                              'approximate numbers if available.'}},
          'domain_of': ['DataSourceEvaluation']} })
-    organism_coverage: str = Field(default=..., description="""Description of which organisms or species are covered by the data source (e.g., human-only, human and model organisms, multi-species).""", json_schema_extra = { "linkml_meta": {'alias': 'organism_coverage',
+    organism_coverage: Optional[str] = Field(default=None, description="""Description of which organisms or species are covered by the data source (e.g., human-only, human and model organisms, multi-species).""", json_schema_extra = { "linkml_meta": {'alias': 'organism_coverage',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Which organisms are covered? Human-only, '
                                              'specific model organisms, or '
                                              'multi-species?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    scale: str = Field(default=..., description="""The approximate scale of the data source in terms of number of entities, edges/relationships, or records. Provide specific numbers where possible.""", json_schema_extra = { "linkml_meta": {'alias': 'scale',
+    scale: Optional[str] = Field(default=None, description="""The approximate scale of the data source in terms of number of entities, edges/relationships, or records. Provide specific numbers where possible.""", json_schema_extra = { "linkml_meta": {'alias': 'scale',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Approximate scale: How many entities? '
                                              'How many edges/relationships? Use terms '
@@ -480,7 +489,7 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              '"100k-1M edges", ">1M edges" if exact '
                                              "numbers aren't available."}},
          'domain_of': ['DataSourceEvaluation']} })
-    modality_breadth: str = Field(default=..., description="""Description of the diversity of data modalities, experimental methods, or evidence types represented (e.g., single assay type, multiple experimental techniques, diverse evidence including clinical and experimental).""", json_schema_extra = { "linkml_meta": {'alias': 'modality_breadth',
+    modality_breadth: Optional[str] = Field(default=None, description="""Description of the diversity of data modalities, experimental methods, or evidence types represented (e.g., single assay type, multiple experimental techniques, diverse evidence including clinical and experimental).""", json_schema_extra = { "linkml_meta": {'alias': 'modality_breadth',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'What modalities or evidence types are '
                                              'included? Single modality (e.g., only '
@@ -488,7 +497,7 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              '(e.g., experimental, clinical trials, '
                                              'literature, omics)?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    drug_disease_edge_types: list[str] = Field(default=..., description="""Semicolon-separated list of specific drug-disease related edge families present. Include Drug-Target (D-T), Target-Disease (T-D), Drug-Disease (D-D), Drug-Adverse Effect (D-AE), and any other relevant drug repurposing edge types.""", json_schema_extra = { "linkml_meta": {'alias': 'drug_disease_edge_types',
+    drug_disease_edge_types: Optional[list[str]] = Field(default=None, description="""Semicolon-separated list of specific drug-disease related edge families present. Include Drug-Target (D-T), Target-Disease (T-D), Drug-Disease (D-D), Drug-Adverse Effect (D-AE), and any other relevant drug repurposing edge types.""", json_schema_extra = { "linkml_meta": {'alias': 'drug_disease_edge_types',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'List specific edge types relevant to '
                                              'drug repurposing: Drug-Target, '
@@ -497,7 +506,7 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'others. If none are directly present, '
                                              'state "indirect only".'}},
          'domain_of': ['DataSourceEvaluation']} })
-    identifier_mapping_quality: str = Field(default=..., description="""Assessment of how well entity identifiers in this source align with standard ontologies and identifiers used in MATRIX. Include information about ID systems used and mapping challenges.""", json_schema_extra = { "linkml_meta": {'alias': 'identifier_mapping_quality',
+    identifier_mapping_quality: Optional[str] = Field(default=None, description="""Assessment of how well entity identifiers in this source align with standard ontologies and identifiers used in MATRIX. Include information about ID systems used and mapping challenges.""", json_schema_extra = { "linkml_meta": {'alias': 'identifier_mapping_quality',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'What identifier systems are used? Do '
                                              'they map cleanly to standard ontologies '
@@ -506,7 +515,7 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'significant ID reconciliation '
                                              'required?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    direction_and_effect: str = Field(default=..., description="""Description of whether relationships include directionality (e.g., drug inhibits target vs. drug affects target) and effect information (e.g., activation, inhibition, increase, decrease).""", json_schema_extra = { "linkml_meta": {'alias': 'direction_and_effect',
+    direction_and_effect: Optional[str] = Field(default=None, description="""Description of whether relationships include directionality (e.g., drug inhibits target vs. drug affects target) and effect information (e.g., activation, inhibition, increase, decrease).""", json_schema_extra = { "linkml_meta": {'alias': 'direction_and_effect',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Are relationships directional? Is effect '
                                              'information included (e.g., inhibition, '
@@ -521,12 +530,20 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'Or is the data purely '
                                              'mechanistic/preclinical?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    curation_level: CurationLevel = Field(default=..., description="""Description of the level of human curation, expert review, or quality control applied to the data.""", json_schema_extra = { "linkml_meta": {'alias': 'curation_level',
+    curation_level: Optional[str] = Field(default=None, description="""Description of the level of human curation, expert review, or quality control applied to the data.""", json_schema_extra = { "linkml_meta": {'alias': 'curation_level',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'Is the data manually curated by experts, '
                                              'automatically extracted, or a mixture? '
                                              'What quality control processes are '
                                              'applied?'}},
+         'domain_of': ['DataSourceEvaluation']} })
+    curation_level_category: Optional[CurationLevel] = Field(default=None, description="""Description of the level of human curation, expert review, or quality control applied to the data.""", json_schema_extra = { "linkml_meta": {'alias': 'curation_level_category',
+         'annotations': {'prompt': {'tag': 'prompt',
+                                    'value': 'Provide one of the following categories '
+                                             'for curation level: manual, '
+                                             'semi-automated, automated, or mixed. Do '
+                                             'not include any other text for this '
+                                             'field.'}},
          'domain_of': ['DataSourceEvaluation']} })
     precision_estimate: Optional[str] = Field(default=None, description="""Estimated precision or accuracy of the data, if known. This may be reported in publications or documentation, or can be qualitatively assessed based on curation methods.""", json_schema_extra = { "linkml_meta": {'alias': 'precision_estimate',
          'annotations': {'prompt': {'tag': 'prompt',
@@ -544,17 +561,24 @@ class DataSourceEvaluation(ConfiguredBaseModel):
                                              'confidence scores, generic '
                                              'relationships, outdated data.'}},
          'domain_of': ['DataSourceEvaluation']} })
-    filtering_needed: FilteringLevel = Field(default=..., description="""Description of what level of filtering, cleaning, or post-processing would be required to use this data source effectively.""", json_schema_extra = { "linkml_meta": {'alias': 'filtering_needed',
+    filtering_needed: Optional[str] = Field(default=None, description="""Description of what level of filtering, cleaning, or post-processing would be required to use this data source effectively.""", json_schema_extra = { "linkml_meta": {'alias': 'filtering_needed',
          'annotations': {'prompt': {'tag': 'prompt',
                                     'value': 'How much filtering or cleaning is '
                                              'needed? Minimal (ready to use), moderate '
                                              '(some refinement needed), or heavy '
                                              '(extensive filtering required)?'}},
          'domain_of': ['DataSourceEvaluation']} })
-    domain_coverage_score: DomainCoverageScore = Field(default=..., description="""Computed score for domain coverage based on entity types, relation types, and descriptor richness. Score 1 (Low): Single entity type, sparse/generic relations, few descriptors. Score 2 (Medium): At least two entities, one consistent relation, usable descriptors. Score 3 (High): Three+ entities, multiple relations, rich descriptors enabling multi-hop paths.""", json_schema_extra = { "linkml_meta": {'alias': 'domain_coverage_score', 'domain_of': ['DataSourceEvaluation']} })
-    source_scope_score: SourceScopeScore = Field(default=..., description="""Computed score for source scope based on disease/organism coverage, scale, and modality breadth. Score 1 (Low): Niche scope, small scale (<10k edges), single modality/therapeutic area. Score 2 (Medium): Multi-disease/organism, mid-scale (10k-100k+ edges), some modality breadth. Score 3 (High): Broad, cross-disease, large-scale (100k-1M+ edges), multiple relation subtypes and modalities.""", json_schema_extra = { "linkml_meta": {'alias': 'source_scope_score', 'domain_of': ['DataSourceEvaluation']} })
-    utility_score: UtilityScore = Field(default=..., description="""Computed score for utility in drug-disease modeling based on direct edge types, ID mapping quality, direction/effect information, and clinical context. Score 1 (Low): Indirect context only; edges sparse, weak, or poorly mapped; no clear D-T/T-D/D-D/AE. Score 2 (Medium): At least one direct edge family; IDs align reasonably; some direction/effect or clinical context present. Score 3 (High): Multiple strong edge families; clear direction/effect with evidence; consistent clinical context and clean mappings.""", json_schema_extra = { "linkml_meta": {'alias': 'utility_score', 'domain_of': ['DataSourceEvaluation']} })
-    noise_penalty: NoisePenalty = Field(default=..., description="""Computed noise penalty based on curation level, precision, and filtering requirements. Deduct 0 (Low Noise): Well-curated, ≥85% precision; mechanistic/functional edges; clean, actionable data with no irrelevant edges. Deduct -1 (Moderate Noise): Substantial fraction of edges generic/ambiguous; precision 70-85%; confidence scoring present but data needs refinement. Deduct -2 (High Noise): Majority of edges are text-mined/generic with <70% precision; many irrelevant or unscored edges; heavy filtering needed.""", json_schema_extra = { "linkml_meta": {'alias': 'noise_penalty', 'domain_of': ['DataSourceEvaluation']} })
+    filtering_needed_category: Optional[FilteringLevel] = Field(default=None, description="""Description of what level of filtering, cleaning, or post-processing would be required to use this data source effectively.""", json_schema_extra = { "linkml_meta": {'alias': 'filtering_needed_category',
+         'annotations': {'prompt': {'tag': 'prompt',
+                                    'value': 'Provide one of the following categories '
+                                             'for filtering level: minimal, moderate, '
+                                             'or heavy. Do not include any other text '
+                                             'for this field.'}},
+         'domain_of': ['DataSourceEvaluation']} })
+    domain_coverage_score: DomainCoverageScore = Field(default=..., description="""Computed score for domain coverage based on entity types, relation types, and descriptor richness. Score 1 (Low): Single entity type, sparse/generic relations, few descriptors. Score 2 (Medium): At least two entities, one consistent relation, usable descriptors. Score 3 (High): Three+ entities, multiple relations, rich descriptors enabling multi-hop paths. A resource concerning only a single entity type (e.g., only proteins or  only drugs) should always be scored as 1. This value must be either 1, 2, or 3.""", json_schema_extra = { "linkml_meta": {'alias': 'domain_coverage_score', 'domain_of': ['DataSourceEvaluation']} })
+    source_scope_score: SourceScopeScore = Field(default=..., description="""Computed score for source scope based on disease/organism coverage, scale, and modality breadth. Score 1 (Low): Niche scope, small scale (<10k edges), single modality/therapeutic area. Score 2 (Medium): Multi-disease/organism, mid-scale (10k-100k+ edges), some modality breadth. Score 3 (High): Broad, cross-disease, large-scale (100k-1M+ edges), multiple relation subtypes and modalities. This value must be either 1, 2, or 3.""", json_schema_extra = { "linkml_meta": {'alias': 'source_scope_score', 'domain_of': ['DataSourceEvaluation']} })
+    utility_score: UtilityScore = Field(default=..., description="""Computed score for utility in drug-disease modeling based on direct edge types, ID mapping quality, direction/effect information, and clinical context. Score 1 (Low): Indirect context only; edges sparse, weak, or poorly mapped; no clear D-T/T-D/D-D/AE. Score 2 (Medium): At least one direct edge family; IDs align reasonably; some direction/effect or clinical context present. Score 3 (High): Multiple strong edge families; clear direction/effect with evidence; consistent clinical context and clean mappings. This value must be either 1, 2, or 3.""", json_schema_extra = { "linkml_meta": {'alias': 'utility_score', 'domain_of': ['DataSourceEvaluation']} })
+    noise_penalty: NoisePenalty = Field(default=..., description="""Computed noise penalty based on curation level, precision, and filtering requirements. Deduct 0 (Low Noise): Well-curated, ≥85% precision; mechanistic/functional edges; clean, actionable data with no irrelevant edges. Deduct -1 (Moderate Noise): Substantial fraction of edges generic/ambiguous; precision 70-85%; confidence scoring present but data needs refinement. Deduct -2 (High Noise): Majority of edges are text-mined/generic with <70% precision; many irrelevant or unscored edges; heavy filtering needed. This value must be either 0, -1, or -2.""", json_schema_extra = { "linkml_meta": {'alias': 'noise_penalty', 'domain_of': ['DataSourceEvaluation']} })
     final_score: Optional[int] = Field(default=None, description="""The final computed score for this data source, calculated as domain_coverage_score + source_scope_score + utility_score + noise_penalty. This provides an overall assessment of source value for MATRIX.""", json_schema_extra = { "linkml_meta": {'alias': 'final_score',
          'annotations': {'prompt.skip': {'tag': 'prompt.skip', 'value': 'true'}},
          'domain_of': ['DataSourceEvaluation']} })
