@@ -3,6 +3,7 @@
 import tempfile
 import unittest
 import unittest.mock as mock
+from types import SimpleNamespace
 
 import litellm
 import pytest
@@ -192,3 +193,46 @@ def test_llmclient_cache_paths_pytest_style(monkeypatch, tmp_path, fake_cache,
     assert isinstance(litellm.cache, fake_cache)
     # Use getattr to access the attribute safely
     assert getattr(litellm.cache, "disk_cache_dir", None) == expected_path
+
+
+def test_llmclient_complete_omits_empty_api_key(monkeypatch):
+    """Ensure empty API keys aren't sent to providers like Ollama."""
+    import ontogpt.clients.llm_client as llm_mod
+
+    response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="ok"))])
+    mock_completion = mock.MagicMock(return_value=response)
+    monkeypatch.setattr(llm_mod, "completion", mock_completion)
+
+    client = llm_mod.LLMClient(model="ollama/llama3")
+    client.complete("hello")
+
+    assert "api_key" not in mock_completion.call_args.kwargs
+
+
+def test_llmclient_embeddings_omits_empty_api_key(monkeypatch):
+    """Ensure empty API keys aren't sent for embeddings."""
+    import ontogpt.clients.llm_client as llm_mod
+
+    response = SimpleNamespace(data=[{"embedding": [0.1, 0.2, 0.3]}])
+    mock_embedding = mock.MagicMock(return_value=response)
+    monkeypatch.setattr(llm_mod, "embedding", mock_embedding)
+
+    client = llm_mod.LLMClient(model="ollama/llama3")
+    client.embeddings("hello")
+
+    assert "api_key" not in mock_embedding.call_args.kwargs
+
+
+def test_llmclient_complete_includes_api_key_when_set(monkeypatch):
+    """Ensure non-empty API keys are passed through."""
+    import ontogpt.clients.llm_client as llm_mod
+
+    response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="ok"))])
+    mock_completion = mock.MagicMock(return_value=response)
+    monkeypatch.setattr(llm_mod, "completion", mock_completion)
+
+    client = llm_mod.LLMClient(model="ollama/llama3")
+    client.api_key = "test-key"
+    client.complete("hello")
+
+    assert mock_completion.call_args.kwargs.get("api_key") == "test-key"
