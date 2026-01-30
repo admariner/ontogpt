@@ -104,16 +104,18 @@ class LLMClient:
 
         try:
             # TODO: expose user prompt to CLI
-            response = completion(
-                api_key=self.api_key,
-                api_base=self.api_base,
-                api_version=self.api_version,
-                model=self.model,
-                messages=these_messages,
-                temperature=self.temperature,
-                caching=True,
-                custom_llm_provider=self.custom_llm_provider,
-            )
+            request_kwargs = {
+                "api_base": self.api_base,
+                "api_version": self.api_version,
+                "model": self.model,
+                "messages": these_messages,
+                "temperature": self.temperature,
+                "caching": True,
+                "custom_llm_provider": self.custom_llm_provider,
+            }
+            if self.api_key:
+                request_kwargs["api_key"] = self.api_key
+            response = completion(**request_kwargs)
         except openai.APITimeoutError as e:
             logger.error(f"Encountered API timeout error: {e}")
         except litellm.exceptions.AuthenticationError as e:
@@ -170,14 +172,16 @@ class LLMClient:
 
         logger.info(f"Retrieving embeddings from {model} for text: {text[0:80]}...")
 
-        response = embedding(
-            api_key=self.api_key,
-            api_base=self.api_base,
-            api_version=self.api_version,
-            model=model,
-            input=[text],
-            caching=True,
-        )
+        request_kwargs = {
+            "api_base": self.api_base,
+            "api_version": self.api_version,
+            "model": model,
+            "input": [text],
+            "caching": True,
+        }
+        if self.api_key:
+            request_kwargs["api_key"] = self.api_key
+        response = embedding(**request_kwargs)
 
         if response is not None:
             payload = response.data[0]["embedding"]
