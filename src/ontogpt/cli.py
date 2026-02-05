@@ -2174,7 +2174,7 @@ def _get_templates() -> Dict[str, Tuple[str, str]]:
     template_dir = Path(__file__).parent / "templates"
     template_paths = [f for f in template_dir.glob("*.yaml")]
     for template_path in template_paths:
-        with open(template_path, "r") as template_file:
+        with open(template_path, "r", encoding="utf-8") as template_file:
             data = yaml.safe_load(template_file)
             if data["id"].startswith(http_prefixes):
                 identifier = data["id"].split("/")[-1]
