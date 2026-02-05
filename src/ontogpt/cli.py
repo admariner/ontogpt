@@ -55,6 +55,7 @@ from ontogpt.io.markdown_exporter import MarkdownExporter
 from ontogpt.io.owl_exporter import OWLExporter
 from ontogpt.io.rdf_exporter import RDFExporter
 from ontogpt.io.template_loader import get_template_details, get_template_path
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.io.yaml_wrapper import dump_minimal_yaml
 from ontogpt.templates.core import ExtractionResult
 from ontogpt.utils.multilingual import multilingual_analysis
@@ -196,7 +197,7 @@ def parse_input(
                         parse_tabular_input(str(f), selectcols)
                         if Path(f).suffix in VALID_TABULAR_FORMATS
                         or Path(f).suffix in VALID_SPREADSHEET_FORMATS
-                        else open(f, "r").read()
+                        else read_text_with_fallbacks(f)
                     )
                     for f in inputfiles
                     if f.is_file()
@@ -207,7 +208,7 @@ def parse_input(
                         parse_tabular_input(str(f), selectcols)
                         if Path(f).suffix in VALID_TABULAR_FORMATS
                         or Path(f).suffix in VALID_SPREADSHEET_FORMATS
-                        else open(f, "r").read()
+                        else read_text_with_fallbacks(f)
                     )
                     for f in inputfiles
                     if f.is_file()
@@ -225,7 +226,7 @@ def parse_input(
             text = parse_tabular_input(input, selectcols)
             logging.info(f"Input text: {text}")
         else:
-            text = open(input, "rb").read().decode(encoding="utf-8", errors="ignore")
+            text = read_text_with_fallbacks(Path(input))
             logging.info(f"Input text: {text}")
         parsedlist = [text]
     else:
@@ -1102,11 +1103,11 @@ def recipe_extract(
         ke.client.cache_db_path = settings.cache_db
 
     if recipes_urls_file:
-        with open(recipes_urls_file, "r") as f:
-            urls = [line.strip() for line in f.readlines() if url in line]
-            if len(urls) != 1:
-                raise ValueError(f"Found {len(urls)} URLs in {recipes_urls_file}")
-            url = urls[0]
+        content = read_text_with_fallbacks(Path(recipes_urls_file))
+        urls = [line.strip() for line in content.splitlines() if url in line]
+        if len(urls) != 1:
+            raise ValueError(f"Found {len(urls)} URLs in {recipes_urls_file}")
+        url = urls[0]
     scraper = scrape_me(url)
 
     if dictionary:
@@ -1172,8 +1173,7 @@ def convert(
     )
 
     cls = ke.template_pyclass
-    with open(input, "r") as f:
-        data = yaml.safe_load(f)
+    data = yaml.safe_load(read_text_with_fallbacks(Path(input)))
     obj = cls(**data["extracted_object"])
     results = ExtractionResult(extracted_object=obj)
     write_extraction(results, output, output_format, ke, template, cut_input_text)
@@ -1580,7 +1580,7 @@ def diagnose(
     if not model:
         model = DEFAULT_MODEL
 
-    phenopackets = [json.load(open(f)) for f in phenopacket_files]
+    phenopackets = [json.loads(read_text_with_fallbacks(Path(f))) for f in phenopacket_files]
     engine = PhenoEngine(
         model=model,
         temperature=temperature,
@@ -1633,7 +1633,9 @@ def run_multilingual_analysis(
     elif input_data_dir and Path(input_data_dir).is_dir():
         logging.info(f"Input file directory: {input_data_dir}")
         inputfiles = Path(input_data_dir).glob("*.txt")
-        inputdict = {str(f.name): open(f, "r").read() for f in inputfiles if f.is_file()}
+        inputdict = {
+            str(f.name): read_text_with_fallbacks(f) for f in inputfiles if f.is_file()
+        }
         logging.info(f"Found {len(inputdict)} input files here.")
 
     i = 0
@@ -1698,7 +1700,7 @@ def answer(
     **kwargs,
 ):
     """Answer a set of questions defined in YAML."""
-    qc = QuestionCollection(**yaml.safe_load(open(inputfile)))
+    qc = QuestionCollection(**yaml.safe_load(read_text_with_fallbacks(Path(inputfile))))
     engine = GenericEngine(
         model=model,
         temperature=temperature,
@@ -1947,7 +1949,7 @@ def complete(
     """
 
     if inputfile:
-        text = open(inputfile).read()
+        text = read_text_with_fallbacks(Path(inputfile))
     else:
         text = input.strip()
 
@@ -2174,7 +2176,7 @@ def _get_templates() -> Dict[str, Tuple[str, str]]:
     template_dir = Path(__file__).parent / "templates"
     template_paths = [f for f in template_dir.glob("*.yaml")]
     for template_path in template_paths:
-        with open(template_path, "r") as template_file:
+        with open(template_path, "r", encoding="utf-8") as template_file:
             data = yaml.safe_load(template_file)
             if data["id"].startswith(http_prefixes):
                 identifier = data["id"].split("/")[-1]

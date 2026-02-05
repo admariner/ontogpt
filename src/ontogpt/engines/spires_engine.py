@@ -32,6 +32,7 @@ from ontogpt.engines.knowledge_engine import (
     chunk_text_by_char,
     chunk_text_by_sentence,
 )
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.io.yaml_wrapper import dump_minimal_yaml
 from ontogpt.templates.core import ExtractionResult, NamedEntity
 from ontogpt.utils.parse_utils import get_span_values, sanitize_text
@@ -212,7 +213,7 @@ class SPIRESEngine(KnowledgeEngine):
             cache_path = Path(cache_path)
         if cache_path:
             if cache_path.exists() and not clear:
-                db = yaml.safe_load(cache_path.open())
+                db = yaml.safe_load(read_text_with_fallbacks(cache_path))
                 if "entities_in_queue" not in db:
                     db["entities_in_queue"] = []
             else:

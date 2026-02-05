@@ -35,6 +35,7 @@ from jinja2 import Template
 from pydantic import BaseModel
 
 from ontogpt.engines.knowledge_engine import KnowledgeEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +78,8 @@ class GenericEngine(KnowledgeEngine):
         if isinstance(template_path, str):
             # Note: The default is a string, so this will always be true
             # create a Jinja2 template object
-            with open(template_path) as file:
-                template_txt = file.read()
-                main_template = Template(template_txt)
+            template_txt = read_text_with_fallbacks(Path(template_path))
+            main_template = Template(template_txt)
         for question in question_collection.questions:
             for instruction in question_collection.instructions:
                 template = main_template

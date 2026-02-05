@@ -1,7 +1,11 @@
 """Experimental output parser utilities for bulleted output."""
 
 import time
+from pathlib import Path
+
 from oaklib import get_adapter
+
+from ontogpt.io.utils import read_text_with_fallbacks
 
 NULL_VALS = [
     "",
@@ -62,34 +66,33 @@ def enumprint(lst):
         print(str(index + 1) + ":\t" + str(elem))
 
 
-with open(output_file, "r") as file:
-    to_print = False
-    # perpetuators = tuple(["  subject:", "  predicate:", "  object:", "    "])
-    perpetuators = tuple(["    - subject:", "      predicate:", "      object:"])
-    perpetuators = tuple(
-        [
-            "    - subject:",
-            "      predicate:",
-            "      object:",
-            "      qualifier:",
-            "      subject_qualifier:",
-            "      object_qualifier:",
-        ]
-    )
-    for line in file:
-        line = line.strip("\n")
-        # if line.startswith("extracted_object:"):
-        if line.startswith("  disease_cellular_process_relationships:") and not line.startswith(
-            "  disease_cellular_process_relationships: "
-        ):
-            # if line.startswith(perpetuators):
-            to_print = True
-        # elif not line.startswith(perpetuators):
-        # if line.startswith("named_entities:"):
-        elif not line.startswith(perpetuators):
-            to_print = False
-        if to_print:
-            lines.append(line)
+to_print = False
+# perpetuators = tuple(["  subject:", "  predicate:", "  object:", "    "])
+perpetuators = tuple(["    - subject:", "      predicate:", "      object:"])
+perpetuators = tuple(
+    [
+        "    - subject:",
+        "      predicate:",
+        "      object:",
+        "      qualifier:",
+        "      subject_qualifier:",
+        "      object_qualifier:",
+    ]
+)
+for line in read_text_with_fallbacks(Path(output_file)).splitlines():
+    line = line.strip("\n")
+    # if line.startswith("extracted_object:"):
+    if line.startswith("  disease_cellular_process_relationships:") and not line.startswith(
+        "  disease_cellular_process_relationships: "
+    ):
+        # if line.startswith(perpetuators):
+        to_print = True
+    # elif not line.startswith(perpetuators):
+    # if line.startswith("named_entities:"):
+    elif not line.startswith(perpetuators):
+        to_print = False
+    if to_print:
+        lines.append(line)
 
 cleaned_lines = [x for x in list(filter(lambda elem: not (elem.isspace()), lines)) if x.strip()]
 cleaned_lines = [

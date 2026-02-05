@@ -20,6 +20,7 @@ import ontogpt.evaluation.drugmechdb.datamodel.drugmechdb as source_datamodel
 import ontogpt.templates.drug as target_datamodel
 from ontogpt.engines.spires_engine import SPIRESEngine
 from ontogpt.evaluation.evaluation_engine import SimilarityScore, SPIRESEvaluationEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 
 THIS_DIR = Path(__file__).parent
 DATABASE_DIR = Path(__file__).parent / "database"
@@ -115,16 +116,15 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
         :return:
         """
         if self._drug_to_mechanism_text is None:
-            with open(MOA_TEXTS, "r") as f:
-                self._drug_to_mechanism_text = {}
-                for line in f:
-                    toks = line.strip().split("\t")
-                    if len(toks) != 2:
-                        logging.warning(f"Bad line: {line}")
-                        continue
-                    drug, text = toks
-                    if text != "NA":
-                        self._drug_to_mechanism_text[f"drugbank:{drug}"] = text
+            self._drug_to_mechanism_text = {}
+            for line in read_text_with_fallbacks(Path(MOA_TEXTS)).splitlines():
+                toks = line.strip().split("\t")
+                if len(toks) != 2:
+                    logging.warning(f"Bad line: {line}")
+                    continue
+                drug, text = toks
+                if text != "NA":
+                    self._drug_to_mechanism_text[f"drugbank:{drug}"] = text
         return self._drug_to_mechanism_text
 
     def load_source_mechanisms_from_path(
@@ -133,9 +133,10 @@ class EvalDrugMechDB(SPIRESEvaluationEngine):
         if isinstance(file, Path):
             file = str(file)
         if isinstance(file, str):
-            with open(file, "r") as f:
-                return self.load_source_mechanisms_from_path(f)
-        mechanisms = yaml.safe_load(file)
+            data = read_text_with_fallbacks(Path(file))
+            mechanisms = yaml.safe_load(data)
+        else:
+            mechanisms = yaml.safe_load(file)
         print(f"Loading {len(mechanisms)} mechanism objects from yaml; translating...")
         return [source_datamodel.Mechanism(**_fix_source_mechanism(m)) for m in mechanisms]
 

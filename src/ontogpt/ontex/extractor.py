@@ -116,6 +116,8 @@ from oaklib.utilities.obograph_utils import shortest_paths
 from pydantic import BaseModel, Field
 from semsql.sqla.semsql import RdfListMemberStatement, RdfTypeStatement, Statements
 
+from ontogpt.io.utils import read_text_with_fallbacks
+
 logger = logging.getLogger(__name__)
 
 
@@ -1106,8 +1108,7 @@ class TaskCollection(BaseModel):
         if isinstance(file_or_object, Path):
             file_or_object = str(file_or_object)
         if isinstance(file_or_object, str):
-            with open(file_or_object) as f:
-                tc_dict = yaml.safe_load(f)
+            tc_dict = yaml.safe_load(read_text_with_fallbacks(Path(file_or_object)))
         else:
             tc_dict = yaml.safe_load(str(file_or_object))
         current_module = sys.modules[__name__]

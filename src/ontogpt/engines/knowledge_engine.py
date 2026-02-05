@@ -94,6 +94,7 @@ from requests.exceptions import ConnectionError, HTTPError, ProxyError
 from ontogpt import DEFAULT_MODEL
 from ontogpt.clients.llm_client import LLMClient
 from ontogpt.templates.core import ExtractionResult, NamedEntity
+from ontogpt.io.utils import read_text_with_fallbacks
 
 this_path = Path(__file__).parent
 logger = logging.getLogger(__name__)
@@ -271,8 +272,7 @@ class KnowledgeEngine(ABC):
         if isinstance(file, str):
             file = Path(file)
         if isinstance(file, Path):
-            with file.open() as f:
-                text = f.read()
+            text = read_text_with_fallbacks(file)
         else:
             text = file.read()
         self.last_text = text
@@ -283,8 +283,8 @@ class KnowledgeEngine(ABC):
     def load_dictionary(self, path: Union[str, Path, list]):
         if not isinstance(path, list):
             logger.info(f"Loading dictionary from {path}")
-            with open(str(path)) as f:
-                return self.load_dictionary(yaml.safe_load(f))
+            data = read_text_with_fallbacks(Path(path))
+            return self.load_dictionary(yaml.safe_load(data))
         if self.dictionary is None:
             self.dictionary = {}
         entries = [(entry["synonym"].lower(), entry["id"]) for entry in path]

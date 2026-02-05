@@ -8,6 +8,8 @@ from linkml.generators.pydanticgen import PydanticGenerator
 from linkml_runtime import SchemaView
 from linkml_runtime.linkml_model import ClassDefinition
 
+from ontogpt.io.utils import ensure_utf8_coding_cookie, read_text_with_fallbacks
+
 TEMPLATE_NAME = str
 
 this_path = Path(__file__).parent
@@ -43,14 +45,16 @@ def get_template_details(template: TEMPLATE_NAME) -> tuple[ClassDefinition, obje
         # So it will have access to imports like the core schema
         templates_path = this_path.parent / "templates"
         new_path_to_template = templates_path / path_to_template.name
-        new_path_to_template.write_text(path_to_template.read_text())
+        template_text = read_text_with_fallbacks(path_to_template)
+        new_path_to_template.write_text(template_text, encoding="utf-8")
         module_name = new_path_to_template.stem
         path_to_module = new_path_to_template.with_suffix(".py")
 
         sv = SchemaView(new_path_to_template)
 
         gen = PydanticGenerator(str(new_path_to_template))
-        path_to_module.write_text(gen.serialize())
+        module_src = ensure_utf8_coding_cookie(gen.serialize())
+        path_to_module.write_text(module_src, encoding="utf-8")
 
         try:
             importlib.invalidate_caches()

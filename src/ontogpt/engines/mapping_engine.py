@@ -47,6 +47,7 @@ from sssom.parsers import parse_sssom_table, to_mapping_set_document
 from sssom_schema import Mapping
 
 from ontogpt.engines.knowledge_engine import KnowledgeEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.prompts.mapping import DEFAULT_MAPPING_EVAL_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -153,9 +154,8 @@ class MappingEngine(KnowledgeEngine):
             template_path = str(template_path)
         if isinstance(template_path, str):
             # create a Jinja2 template object
-            with open(template_path) as file:
-                template_txt = file.read()
-                template = Template(template_txt)
+            template_txt = read_text_with_fallbacks(Path(template_path))
+            template = Template(template_txt)
         subject_concept = self._concept(subject, self.subject_adapter)
         object_concept = self._concept(object, self.object_adapter)
         prompt = template.render(

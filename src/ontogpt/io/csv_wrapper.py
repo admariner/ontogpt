@@ -12,6 +12,7 @@ from oaklib import get_adapter
 from pydantic import BaseModel
 
 from linkml_runtime import SchemaView
+from ontogpt.io.utils import read_text_with_fallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -45,17 +46,16 @@ def output_parser(obj: Any, file) -> List[str]:
     output_file = file
 
     # Extract all 'subject', 'predicate', and 'object' output lines
-    with open(output_file, "r") as file:
-        to_print = False
-        perpetuators = tuple(["  subject:", "  predicate:", "  object:", "    "])
-        for line in file:
-            line = line.strip("\n")
-            if line.startswith("extracted_object:"):
-                to_print = True
-            elif not line.startswith(perpetuators):
-                to_print = False
-            if to_print:
-                lines.append(line)
+    to_print = False
+    perpetuators = tuple(["  subject:", "  predicate:", "  object:", "    "])
+    for line in read_text_with_fallbacks(Path(output_file)).splitlines():
+        line = line.strip("\n")
+        if line.startswith("extracted_object:"):
+            to_print = True
+        elif not line.startswith(perpetuators):
+            to_print = False
+        if to_print:
+            lines.append(line)
 
     # Clean & strip lines
     lines = list(filter(lambda elem: not (elem.isspace()), lines))
@@ -192,13 +192,12 @@ def parse_yaml_predictions(yaml_path: str, schema_path: str, root_class=None):
         rel_df, pandas df: dataframe with relations from YAML output
     """
     # Read in the YAML file
-    with open(yaml_path) as stream:
-        logger.info(f"Parsing documents in {yaml_path}")
-        output_docs = list(yaml.safe_load_all(stream))
-        if len(output_docs) == 0:
-            logger.error(f"No documents found in {yaml_path}")
-        else:
-            logger.info(f"Found {len(output_docs)} documents.")
+    logger.info(f"Parsing documents in {yaml_path}")
+    output_docs = list(yaml.safe_load_all(read_text_with_fallbacks(Path(yaml_path))))
+    if len(output_docs) == 0:
+        logger.error(f"No documents found in {yaml_path}")
+    else:
+        logger.info(f"Found {len(output_docs)} documents.")
 
     # Get schemaview and target root class
     # This root may not be the same as the schema's root
