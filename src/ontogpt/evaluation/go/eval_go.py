@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from ontogpt.engines.spires_engine import SPIRESEngine
 from ontogpt.evaluation.evaluation_engine import SimilarityScore, SPIRESEvaluationEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.templates.metabolic_process import MetabolicProcess
 
 TEST_CASES_DIR = Path(__file__).parent / "test_cases"
@@ -82,8 +83,8 @@ class EvalGO(SPIRESEvaluationEngine):
         return mp
 
     def valid_test_ids(self) -> List[str]:
-        with open(TEST_CASES_DIR / "go-ids-2022.txt") as f:
-            return [x.strip() for x in f.readlines()]
+        data = read_text_with_fallbacks(TEST_CASES_DIR / "go-ids-2022.txt")
+        return [x.strip() for x in data.splitlines()]
 
     def ldef_matches(self, ldef: LogicalDefinitionAxiom) -> bool:
         """Check if a logical definition matches the genus and differentia."""

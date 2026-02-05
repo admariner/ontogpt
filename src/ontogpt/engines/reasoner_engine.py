@@ -37,6 +37,7 @@ from jinja2 import Template
 from pydantic import BaseModel
 
 from ontogpt.engines.knowledge_engine import KnowledgeEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.ontex.extractor import (
     Answer,
     Axiom,
@@ -177,9 +178,8 @@ class ReasonerEngine(KnowledgeEngine):
             template_path = str(template_path)
         if isinstance(template_path, str):
             # create a Jinja2 template object
-            with open(template_path) as file:
-                template_txt = file.read()
-                template = Template(template_txt)
+            template_txt = read_text_with_fallbacks(Path(template_path))
+            template = Template(template_txt)
         prompt = template.render(
             task=task,
             ontology=task.ontology,

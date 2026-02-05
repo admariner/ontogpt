@@ -42,6 +42,7 @@ from pydantic import BaseModel
 from ontogpt.engines.knowledge_engine import chunk_text_by_sentence
 from ontogpt.engines.spires_engine import SPIRESEngine
 from ontogpt.evaluation.evaluation_engine import SimilarityScore, SPIRESEvaluationEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.templates.maxo import MaxoAnnotations, ActionAnnotationRelationship, Publication
 
 THIS_DIR = Path(__file__).parent
@@ -174,8 +175,7 @@ class EvalMAXO(SPIRESEvaluationEngine):
 
         for casefile in path.glob("*.yaml"):
             logger.info(f"Loading case {casefile}")
-            with open(casefile, "r") as file:
-                doc = yaml.safe_load(file)
+            doc = yaml.safe_load(read_text_with_fallbacks(casefile))
             input_text = doc["input_text"]
             logger.debug(f"Text: {input_text}")
             try:

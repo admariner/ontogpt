@@ -13,6 +13,7 @@ from oaklib.interfaces import MappingProviderInterface, TextAnnotatorInterface
 from pydantic import BaseModel
 
 from ontogpt.engines.knowledge_engine import KnowledgeEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.io.yaml_wrapper import dump_minimal_yaml
 from ontogpt.prompts.phenopacket import DEFAULT_PHENOPACKET_PROMPT
 
@@ -58,9 +59,8 @@ class PhenoEngine(KnowledgeEngine):
             template_path = str(template_path)
         if isinstance(template_path, str):
             # create a Jinja2 template object
-            with open(template_path) as file:
-                template_txt = file.read()
-                template = Template(template_txt)
+            template_txt = read_text_with_fallbacks(Path(template_path))
+            template = Template(template_txt)
         # Account for missing template fields if necessary
         # TODO: make this its own function
         for subject_key in ["sex", "ageAtCollection"]:

@@ -23,6 +23,7 @@ from tiktoken import Encoding
 
 from ontogpt.clients import LLMClient
 from ontogpt.engines.knowledge_engine import FIELD, KnowledgeEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.io.yaml_wrapper import dump_minimal_yaml
 from ontogpt.templates.halo import Ontology, OntologyElement
 
@@ -96,7 +97,8 @@ class HALOEngine(KnowledgeEngine):
         :param file_path:
         :return:
         """
-        ontology = Ontology(**yaml.safe_load(open(file_path)))
+        ontology_text = read_text_with_fallbacks(Path(file_path))
+        ontology = Ontology(**yaml.safe_load(ontology_text))
         self.seed(ontology)
         logger.info(f"Seeded with {len(ontology.elements)} elements")
         return ontology

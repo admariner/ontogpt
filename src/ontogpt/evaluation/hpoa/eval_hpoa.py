@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from ontogpt.clients.pubmed_client import PubmedClient
 from ontogpt.engines.spires_engine import SPIRESEngine
 from ontogpt.evaluation.evaluation_engine import SimilarityScore, SPIRESEvaluationEngine
+from ontogpt.io.utils import read_text_with_fallbacks
 from ontogpt.templates.mendelian_disease import MendelianDisease
 
 DATABASE_DIR = Path(__file__).parent / "database"
@@ -77,19 +78,18 @@ class EvalHPOA(SPIRESEvaluationEngine):
 
     def disease_text(self, id: str):
         id = id.lower().replace(":", "-")
-        with open(TEST_CASES_DIR / "cases" / f"{id}.txt") as f:
-            return f.read()
+        return read_text_with_fallbacks(TEST_CASES_DIR / "cases" / f"{id}.txt")
 
     def parse_hpoa(self) -> Iterator[HPOAnnotation]:
-        with open(TEST_CASES_DIR / TEST_HPOA_FILE) as file:
-            reader = csv.reader(file, delimiter="\t")
-            for row in reader:
-                yield HPOAnnotation(
-                    subject=row[0],
-                    term=row[3],
-                    publication=row[4],
-                    aspect=row[10],
-                )
+        data = read_text_with_fallbacks(TEST_CASES_DIR / TEST_HPOA_FILE)
+        reader = csv.reader(data.splitlines(), delimiter="\t")
+        for row in reader:
+            yield HPOAnnotation(
+                subject=row[0],
+                term=row[3],
+                publication=row[4],
+                aspect=row[10],
+            )
 
     def annotations_to_diseases(
         self, anns: Iterable[HPOAnnotation] = None

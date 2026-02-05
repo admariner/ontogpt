@@ -1,0 +1,73 @@
+id: http://w3id.org/ontogpt/biomed_terminology
+name: biomed_terminology
+title: Biomed Terminology Template
+description: >-
+  A template for Biomedical Terminology
+license: https://creativecommons.org/publicdomain/zero/1.0/
+prefixes:
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  HGNC: http://identifiers.org/hgnc/
+  MESH: http://identifiers.org/mesh/
+  biomed_terminology: http://w3id.org/ontogpt/biomed_terminology/
+  linkml: https://w3id.org/linkml/
+
+default_prefix: biomed_terminology
+default_range: string
+
+imports:
+  - linkml:types
+  - core
+
+classes:
+  Document:
+    tree_root: true
+    description: >-
+      A document containing biomedical terminology, likely with
+      a single term per line.
+    attributes:
+      terms_and_locations:
+        description: >-
+          All individual terms in the document, semicolon-separated.
+        range: TermAndLocation
+        multivalued: true
+
+  TermAndLocation:
+    description: >-
+      A term that may have a location associated with it.
+    attributes:
+      term:
+        description: >-
+          The term itself, e.g., "cardiac ecg", with no changes.
+        range: string
+      term_grounded:
+        description: >-
+          The term itself, e.g., "cardiac ecg". Don't change the term,
+          this is just a copy of the term field so it can be edited
+          in a subsequent step.
+        range: GroundedTerm
+      location:
+        description: >-
+          The anatomical location associated with the term, if any.
+          For example, "heart" for "cardiac ecg".
+          Don't provide multiple locations, e.g., don't provide
+          "retina or eye", just provide "retina" or "eye".
+          If not specified, do not provide a value for this field.
+        range: AnatomicalLocation
+
+  GroundedTerm:
+    is_a: NamedEntity
+    id_prefixes:
+      - MESH
+      - LOINC
+      - NCIT
+      - GO
+      - OBI
+    annotations:
+      annotators: sqlite:obo:mesh, sqlite:obo:ncit, bioportal:BERO, bioportal:LOINC
+
+  AnatomicalLocation:
+    is_a: NamedEntity
+    id_prefixes:
+      - UBERON
+    annotations:
+      annotators: sqlite:obo:uberon
