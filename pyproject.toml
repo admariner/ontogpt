@@ -89,7 +89,7 @@ ontogpt = ["*.yaml"]
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py313"]
+target-version = ["py310", "py313"]
 
 [tool.isort]
 profile = "black"

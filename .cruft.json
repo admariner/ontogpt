@@ -7,7 +7,7 @@
       "project_name": "ontogpt",
       "__project_slug": "ontogpt",
       "project_description": "ontogpt",
-      "min_python_version": "3.9",
+      "min_python_version": "3.10",
       "file_name": "OAK for Artifical Intelligence",
       "greeting_recipient": "World",
       "full_name": "Harshad Hegde",
