@@ -1,6 +1,6 @@
 [project]
 name = "ontogpt"
-version = "1.0.19"
+version = "1.1.0"
 description = "OntoGPT is a Python package for extracting structured information from text with large language models (LLMs), instruction prompts, and ontology-based grounding."
 readme = "README.md"
 authors = [
@@ -8,7 +8,7 @@ authors = [
     {name = "J. Harry Caufield", email = "jhc@lbl.gov"},
 ]
 license = {text = "BSD-3"}
-requires-python = ">=3.9,!=3.9.7,<3.14"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "ruamel-yaml>=0.17.31",
     "aiohttp>=3.8.4",
@@ -19,7 +19,7 @@ dependencies = [
     "inflect>=6.0.2",
     "inflection>=0.5.1",
     "linkml>=1.9.3-rc1",
-    "linkml-owl<1.0.0,>=0.3.0",
+    "linkml-owl<1.0.0,>=0.5.0",
     "oaklib>=0.5.28",
     "pydantic>=2.4.0",
     "requests<3.0.0,>=2.31.0",
@@ -89,7 +89,7 @@ ontogpt = ["*.yaml"]
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py313"]
+target-version = ["py310", "py313"]
 
 [tool.isort]
 profile = "black"

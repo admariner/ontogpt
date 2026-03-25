@@ -15,7 +15,7 @@ _OntoGPT_ is a Python package for extracting structured information from text wi
 
 OntoGPT runs on the command line, though there's also a minimal web app interface (see `Web Application` section below).
 
-1. Ensure you have Python 3.9 or greater installed.
+1. Ensure you have Python 3.10 or greater installed.
 2. Install with `pip`:
 
     ```bash
